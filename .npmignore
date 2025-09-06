@@ -1,0 +1,52 @@
+# Source files
+src/
+tests/
+coverage/
+
+# Configuration files
+tsconfig.json
+jest.config.js
+eslint.config.js
+.prettierrc
+.prettierignore
+
+# Development files
+*.log
+*.tgz
+*.tar.gz
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env*
+
+# Build artifacts (keep dist/ for publishing)
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Documentation (keep README.md and LICENSE)
+docs/
+*.md
+!README.md
+
+# Examples
+example/
+examples/
+
+# Temporary files
+tmp/
+temp/
