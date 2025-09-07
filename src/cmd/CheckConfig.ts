@@ -1,56 +1,42 @@
 import * as vscode from 'vscode'
 import { ConfigurationData } from '@interfaces/index'
-import ConfigManager from '@config/ConfigManager'
-import OllamaService from '@services/OllamaService'
-import ErrorHandler from '@utils/ErrorHandler'
-
-/** Constants */
-const vscodeSettingsCommand: string = 'workbench.action.openSettings'
-const vscodeSettingsFilter: string = 'nexora-vscode'
-const vscodeSettingsButton: string = 'Open Settings'
+import { ConfigManager } from '@config/index'
+import { OllamaService } from '@services/index'
+import { ErrorHandler, Validator } from '@utils/index'
+import { vscodeSettingsCommand, vscodeSettingsFilter, vscodeSettingsButton } from '@constants/index'
 
 /**
- * Validates configuration and checks service availability
- * Shows configuration status and available models to the user
- * @param ollamaService - Ollama service instance for model validation
+ * Validates configuration settings and checks service availability
+ * Displays configuration status and available models to the user
+ * @param ollamaService - Service instance for model validation
  */
 export default async function (ollamaService: OllamaService): Promise<void> {
   try {
     const config: ConfigurationData = ConfigManager.getConfig()
-    const ollamaAvailable: string[] = await ollamaService.getModels()
-    await vscode.commands.executeCommand(vscodeSettingsCommand, vscodeSettingsFilter)
-    if (ollamaAvailable.length === 0) {
-      vscode.window
-        .showWarningMessage(
-          `Ollama not available at ${config.host}. Please check your settings.`,
-          vscodeSettingsButton
-        )
-        .then((selection: string | undefined) => {
-          if (selection === vscodeSettingsButton) {
-            vscode.commands.executeCommand(vscodeSettingsCommand, vscodeSettingsFilter)
-          }
-        })
-    }
-    const modelStatus: string = config.selectedModel
-      ? `Model: ${config.selectedModel}`
-      : 'Model: Not selected'
-    vscode.window
-      .showInformationMessage(
-        'Nexora VSCode configured successfully!\n' +
-          `Host: ${config.host}\n` +
-          `Database: ${config.databasePath}\n` +
-          `Ollama: Connected (${ollamaAvailable.length} models)\n${modelStatus}`,
-        vscodeSettingsButton,
-        'Select Model'
+    if (Validator.isOllamaUrl(config.host) && !Validator.isValidPath(config.databasePath)) {
+      vscode.window.showWarningMessage(
+        `Invalid database path: ${config.databasePath}.`,
+        vscodeSettingsButton
       )
-      .then((selection: string | undefined) => {
-        if (selection === vscodeSettingsButton) {
-          vscode.commands.executeCommand(vscodeSettingsCommand, vscodeSettingsFilter)
-        } else if (selection === 'Select Model') {
-          vscode.commands.executeCommand('nexora-vscode.selectModel')
-        }
-      })
+      await openSettings()
+      return
+    }
+    const ollamaAvailable: string[] = await ollamaService.getModels()
+    if (ollamaAvailable.length === 0) {
+      await openSettings()
+      return
+    }
+    vscode.window.showInformationMessage('All configurations are valid, extension is ready to use!')
   } catch (error: unknown) {
     ErrorHandler.handle(error, 'configuration check', true, 'error')
+    await openSettings()
   }
+}
+
+/**
+ * Opens VSCode settings with the extension filter applied
+ * Navigates user to extension configuration page
+ */
+async function openSettings(): Promise<void> {
+  await vscode.commands.executeCommand(vscodeSettingsCommand, vscodeSettingsFilter)
 }

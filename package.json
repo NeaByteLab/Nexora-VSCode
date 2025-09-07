@@ -9,7 +9,6 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
   "main": "./dist/Extension.js",
   "contributes": {
     "commands": [
@@ -25,20 +24,20 @@
     "configuration": {
       "title": "Nexora VSCode",
       "properties": {
-        "nexora-vscode.host": {
+        "nexora-vscode.urlHost": {
           "type": "string",
           "default": "http://localhost:11434",
-          "description": "Ollama host URL for AI integration"
+          "description": "Service host URL for AI integration"
         },
         "nexora-vscode.databasePath": {
           "type": "string",
           "default": "~/nexora.db",
-          "description": "Path to SQLite database file (e.g., ~/nexora.db or /path/to/nexora.db)"
+          "description": "Path to SQLite database file (e.g. ~/nexora.db or /path/to/nexora.db)"
         },
         "nexora-vscode.selectedModel": {
           "type": "string",
           "default": "",
-          "description": "Selected Ollama model for code completion"
+          "description": "Selected model for code completion"
         }
       }
     }
@@ -46,7 +45,7 @@
   "scripts": {
     "vscode:prepublish": "npm run build",
     "watch": "tsc -watch -p ./",
-    "build": "tsc && tsc-alias -f -fe .js",
+    "build": "rm .tsbuildinfo && tsc && tsc-alias -f -fe .js",
     "lint": "eslint src/**/**/**/*.ts",
     "lint:fix": "eslint src/**/**/**/*.ts --fix",
     "format": "prettier --write src/**/**/**/*.ts",

@@ -1,27 +1,34 @@
 import { Ollama } from 'ollama'
-import { AccountData, ConfigurationData } from '@interfaces/index'
+import { AccountData } from '@interfaces/index'
 import { AccountManager, ConfigManager } from '@config/index'
 import { ErrorHandler, Validator } from '@utils/index'
 
 /**
- * Service for Ollama API integration
- * Manages communication with local or remote Ollama instances
+ * API service for model integration
+ * Manages communication with local or remote model instances
  */
 export default class OllamaService {
-  private static readonly CONNECTION_HELP_MESSAGE: string = 'Please ensure Ollama is running!'
-  private static readonly CONNECTION_ERROR_MESSAGE: string = 'Cannot connect to Ollama at'
-  private static readonly TIMEOUT_ERROR_MESSAGE: string = 'Connection timeout to Ollama at'
-  private static readonly INVALID_DATABASE_PATH_ERROR_MESSAGE: string = 'Invalid database path'
-  private static readonly INVALID_MODEL_ERROR_MESSAGE: string = 'Invalid model name'
+  /** Error message for connection issues */
+  private static readonly CONNECTION_HELP_MESSAGE: string = 'Please ensure the service is running!'
+  /** Error message for connection failures */
+  private static readonly CONNECTION_ERROR_MESSAGE: string = 'Cannot connect to service at'
+  /** Error message for timeout issues */
+  private static readonly TIMEOUT_ERROR_MESSAGE: string = 'Connection timeout to service at'
+  /** Help message for timeout issues */
   private static readonly TIMEOUT_HELP_MESSAGE: string = 'Please check your network connection.'
+  /** Context string for fetching models operation */
   private static readonly FETCHING_MODELS_CONTEXT: string = 'fetching models'
+  /** Service host URL */
   private host: string
+  /** Database file path */
   private databasePath: string
+  /** Currently selected model name */
   private selectedModel: string
+  /** Ollama service instance */
   private ollama: Ollama
 
   /**
-   * Creates OllamaService instance
+   * Creates a new service instance
    * Sets up configuration and registers change listeners
    */
   constructor() {
@@ -38,19 +45,7 @@ export default class OllamaService {
   }
 
   /**
-   * Gets the current configuration
-   * @returns Object with current host, database path, and selected model
-   */
-  public getConfig(): ConfigurationData {
-    return {
-      host: this.host,
-      databasePath: this.databasePath,
-      selectedModel: this.selectedModel
-    }
-  }
-
-  /**
-   * Gets available models from Ollama
+   * Gets available models from the service
    * @returns Promise resolving to array of model names
    */
   public async getModels(): Promise<string[]> {
@@ -84,24 +79,15 @@ export default class OllamaService {
   }
 
   /**
-   * Generates code completion using Ollama
-   * @param prompt - Text prompt to send to Ollama
-   * @param model - Model name to use for generation
+   * Generates text completion using the model service
+   * @param prompt - Text prompt to send to model
    * @returns Promise resolving to generated response text
    */
-  public async generateCompletion(prompt: string, model: string): Promise<string> {
+  public async generateCompletion(prompt: string): Promise<string> {
     try {
-      if (!model || model.trim() === '') {
-        throw new Error(OllamaService.INVALID_MODEL_ERROR_MESSAGE)
-      }
       this.ollama = await this.getInstance()
-      // -- Debug
-      console.log('ollama', this.ollama)
-      console.log('host', this.host)
-      console.log('model', model)
-      // -- End Debug
       const response: { response: string } = await this.ollama.generate({
-        model,
+        model: this.selectedModel,
         prompt,
         stream: false
       })
@@ -113,13 +99,13 @@ export default class OllamaService {
   }
 
   /**
-   * Gets Ollama instance with proper configuration
+   * Gets service instance with proper configuration
    * Uses account authentication for remote URLs or basic config for local instances
-   * @returns Promise resolving to configured Ollama instance
+   * @returns Promise resolving to configured service instance
    */
   private async getInstance(): Promise<Ollama> {
-    if (Validator.isOllamaUrl(this.host)) {
-      if (Validator.isValidPath(this.databasePath)) {
+    if (Validator.isOllamaUrl(this.host) && Validator.isValidPath(this.databasePath)) {
+      try {
         const account: AccountData | null = await AccountManager.getRandomAccount()
         return new Ollama({
           host: this.host,
@@ -128,16 +114,15 @@ export default class OllamaService {
             'Content-Type': 'application/json'
           }
         })
-      } else {
-        throw new Error(OllamaService.INVALID_DATABASE_PATH_ERROR_MESSAGE)
+      } catch (error: unknown) {
+        ErrorHandler.handleConfigError(error, 'getInstance')
       }
-    } else {
-      return new Ollama({
-        host: this.host,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
     }
+    return new Ollama({
+      host: this.host,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
   }
 }

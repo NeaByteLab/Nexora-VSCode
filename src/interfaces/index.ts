@@ -1,5 +1,6 @@
 /**
  * Log level type for error handling
+ * Defines available logging severity levels
  */
 export type LogLevel = 'error' | 'warning' | 'info'
 

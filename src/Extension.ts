@@ -1,14 +1,15 @@
 import * as vscode from 'vscode'
 import { CheckConfig, SelectModel } from '@cmd/index'
-import { ConfigManager } from '@config/index'
 import { OllamaService } from '@services/index'
 
-/** Extension services */
+/**
+ * Global service instances
+ */
 let ollamaService: OllamaService
 
 /**
- * Activates the extension when VSCode starts
- * @param context - VSCode extension context for managing subscriptions
+ * Initializes the extension when VSCode starts
+ * @param context - Extension context for managing subscriptions
  */
 export function activate(context: vscode.ExtensionContext): void {
   ollamaService = new OllamaService()
@@ -25,28 +26,12 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   )
   context.subscriptions.push(checkConfigCommand, selectModelCommand)
-  void ensureModelSelected()
 }
 
 /**
- * Deactivates the extension when VSCode shuts down
- * Cleans up resources and subscriptions
+ * Cleans up resources when extension is deactivated
+ * Called when VSCode shuts down or extension is disabled
  */
 export function deactivate(): undefined | void {
   return undefined
-}
-
-/**
- * Ensures a model is selected on startup
- * Automatically selects the first available model if none is currently selected
- */
-async function ensureModelSelected(): Promise<void> {
-  try {
-    const models: string[] = await ollamaService.getModels()
-    if (models.length > 0 && models[0] !== undefined && models[0] !== '') {
-      await ConfigManager.setSelectedModel(models[0])
-    }
-  } catch {
-    // Skip ErrorHandler
-  }
 }

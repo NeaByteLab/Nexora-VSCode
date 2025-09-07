@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { LogLevel } from '@interfaces/index'
 
 /**
- * Console method mapping for proper typing
+ * Console method mapping for log level typing
  */
 const consoleMethods: Record<LogLevel, keyof Console> = {
   error: 'error',
@@ -11,12 +11,14 @@ const consoleMethods: Record<LogLevel, keyof Console> = {
 } as const
 
 /**
- * Centralized error handling utility for the VSCode extension
+ * Centralized error handling utility
  * Provides consistent error handling, logging, and user notifications
  */
 export default class ErrorHandler {
+  /** Default message for unknown errors */
   private static readonly UNKNOWN_ERROR_MESSAGE: string = 'An unknown error occurred'
-  private static readonly LOG_PREFIX: string = '[Nexora-VSCode]'
+  /** Prefix for log messages */
+  private static readonly LOG_PREFIX: string = '[Extension]'
 
   /**
    * Handles errors with consistent logging and user notification
@@ -69,8 +71,8 @@ export default class ErrorHandler {
   }
 
   /**
-   * Handles Ollama API errors
-   * @param error - The Ollama API error
+   * Handles API service errors
+   * @param error - The API service error
    * @param operation - Description of the API operation
    */
   public static handleOllamaError(error: unknown, operation: string): void {
@@ -128,7 +130,7 @@ export default class ErrorHandler {
     ) => void
     consoleFn(logMessage)
     try {
-      const outputChannel: vscode.OutputChannel = vscode.window.createOutputChannel('Nexora-VSCode')
+      const outputChannel: vscode.OutputChannel = vscode.window.createOutputChannel('Extension')
       outputChannel.appendLine(logMessage)
     } catch {
       // VSCode API not available, skip output channel logging
@@ -143,13 +145,13 @@ export default class ErrorHandler {
   private static showUserNotification(message: string, level: LogLevel): void {
     switch (level) {
       case 'error':
-        vscode.window.showErrorMessage(`Nexora-VSCode: ${message}`)
+        vscode.window.showErrorMessage(`Extension: ${message}`)
         break
       case 'warning':
-        vscode.window.showWarningMessage(`Nexora-VSCode: ${message}`)
+        vscode.window.showWarningMessage(`Extension: ${message}`)
         break
       case 'info':
-        vscode.window.showInformationMessage(`Nexora-VSCode: ${message}`)
+        vscode.window.showInformationMessage(`Extension: ${message}`)
         break
     }
   }

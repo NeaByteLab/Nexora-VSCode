@@ -10,6 +10,7 @@
     "paths": {
       "@cmd/*": ["src/cmd/*"],
       "@config/*": ["src/config/*"],
+      "@constants/*": ["src/constants/*"],
       "@interfaces/*": ["src/interfaces/*"],
       "@services/*": ["src/services/*"],
       "@utils/*": ["src/utils/*"]

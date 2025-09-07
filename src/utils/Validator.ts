@@ -2,16 +2,17 @@ import * as path from 'path'
 import * as fs from 'fs'
 
 /**
- * Utility class for validation functions
- * Provides common validation methods for the extension
+ * Validation utility class
+ * Provides common validation methods
  */
 export default class Validator {
-  private static readonly OLLAMA_DOMAINS: string[] = ['ollama.com', 'www.ollama.com']
+  /** Valid service domains for URL validation */
+  private static readonly SERVICE_DOMAINS: string[] = ['ollama.com', 'www.ollama.com']
 
   /**
-   * Checks if a string is a valid Ollama URL
+   * Checks if a string is a valid service URL
    * @param url - URL string to validate
-   * @returns True if the URL is a valid Ollama URL, false otherwise
+   * @returns True if the URL is valid, false otherwise
    */
   public static isOllamaUrl(url: string): boolean {
     if (!url || typeof url !== 'string') {
@@ -23,7 +24,7 @@ export default class Validator {
         return false
       }
       const hostname: string = urlObject.hostname.toLowerCase()
-      return this.OLLAMA_DOMAINS.some((domain: string) => hostname === domain)
+      return this.SERVICE_DOMAINS.some((domain: string) => hostname === domain)
     } catch {
       return false
     }
@@ -42,13 +43,7 @@ export default class Validator {
       return false
     }
     try {
-      const expandedPath: string = dbPath.startsWith('~/')
-        ? path.join(process.env['HOME'] ?? process.env['USERPROFILE'] ?? '', dbPath.slice(2))
-        : dbPath
-      if (!path.isAbsolute(expandedPath)) {
-        return false
-      }
-      const dir: string = path.dirname(expandedPath)
+      const dir: string = path.dirname(dbPath)
       return fs.existsSync(dir)
     } catch {
       return false
