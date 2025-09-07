@@ -12,11 +12,11 @@ import {
 
 /**
  * Configuration management utility
- * Handles retrieval and updates of VSCode workspace settings
+ * Handles retrieval and updates of workspace settings
  */
 export default class ConfigManager {
   /**
-   * Gets the host URL from VSCode configuration
+   * Gets the host URL from configuration
    * @returns Host URL or default value
    */
   public static getHost(): string {
@@ -34,7 +34,7 @@ export default class ConfigManager {
   }
 
   /**
-   * Gets the database path from VSCode configuration
+   * Gets the database path from configuration
    * @returns Database path or default value
    */
   public static getDatabasePath(): string {
@@ -52,7 +52,7 @@ export default class ConfigManager {
   }
 
   /**
-   * Gets the selected model from VSCode configuration
+   * Gets the selected model from configuration
    * @returns Model name or default value
    */
   public static getSelectedModel(): string {

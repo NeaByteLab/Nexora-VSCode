@@ -14,34 +14,34 @@ export const defaultDatabasePath: string = '~/nexora.db'
 export const defaultSelectedModel: string = ''
 
 /**
- * Extension configuration section name in VSCode settings
+ * Extension configuration section name in settings
  */
-export const configSection: string = 'nexora-vscode'
+export const configSection: string = 'Nexora-AI'
 
 /**
  * Host URL configuration setting key
  */
-export const configUrlHost: string = 'urlHost'
+export const configUrlHost: string = 'UrlHost'
 
 /**
  * Database path configuration setting key
  */
-export const configDatabasePath: string = 'databasePath'
+export const configDatabasePath: string = 'DatabasePath'
 
 /**
  * Selected model configuration setting key
  */
-export const configSelectedModel: string = 'selectedModel'
+export const configSelectedModel: string = 'SelectedModel'
 
 /**
- * VSCode command identifier for opening settings
+ * Command identifier for opening settings
  */
 export const vscodeSettingsCommand: string = 'workbench.action.openSettings'
 
 /**
- * VSCode settings filter to show only extension settings
+ * Settings filter to show only extension settings
  */
-export const vscodeSettingsFilter: string = 'nexora-vscode'
+export const vscodeSettingsFilter: string = configSection
 
 /**
  * Text displayed on settings button in notifications

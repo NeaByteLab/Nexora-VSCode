@@ -5,6 +5,12 @@
 export type LogLevel = 'error' | 'warning' | 'info'
 
 /**
+ * Result type for completion operations
+ * Represents the response from text generation services
+ */
+export type CompletionResult = string | null
+
+/**
  * Account data structure for user authentication and rate limiting
  * Contains user credentials and API usage limits
  */

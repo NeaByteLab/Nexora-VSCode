@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { LogLevel } from '@interfaces/index'
+import { configSection, vscodeSettingsButton } from '@constants/index'
 
 /**
  * Console method mapping for log level typing
@@ -18,7 +19,7 @@ export default class ErrorHandler {
   /** Default message for unknown errors */
   private static readonly UNKNOWN_ERROR_MESSAGE: string = 'An unknown error occurred'
   /** Prefix for log messages */
-  private static readonly LOG_PREFIX: string = '[Extension]'
+  private static readonly LOG_PREFIX: string = `[${configSection}]`
 
   /**
    * Handles errors with consistent logging and user notification
@@ -37,7 +38,7 @@ export default class ErrorHandler {
     const fullContext: string = `${this.LOG_PREFIX} ${context}`
     this.logError(errorMessage, fullContext, logLevel)
     if (showToUser) {
-      this.showUserNotification(errorMessage, logLevel)
+      this.showNotification(errorMessage, logLevel, true)
     }
   }
 
@@ -76,7 +77,7 @@ export default class ErrorHandler {
    * @param operation - Description of the API operation
    */
   public static handleOllamaError(error: unknown, operation: string): void {
-    this.handle(error, `Ollama API error during ${operation}`, true, 'error')
+    this.handle(error, `API service error during ${operation}`, true, 'error')
   }
 
   /**
@@ -116,7 +117,7 @@ export default class ErrorHandler {
   }
 
   /**
-   * Logs error to VSCode output channel
+   * Logs error to output channel
    * @param message - Error message to log
    * @param context - Context information
    * @param level - Log level
@@ -133,7 +134,7 @@ export default class ErrorHandler {
       const outputChannel: vscode.OutputChannel = vscode.window.createOutputChannel('Extension')
       outputChannel.appendLine(logMessage)
     } catch {
-      // VSCode API not available, skip output channel logging
+      // VSCode API Not Available
     }
   }
 
@@ -141,17 +142,26 @@ export default class ErrorHandler {
    * Shows user notification based on error level
    * @param message - Error message to show
    * @param level - Error level
+   * @param openConfig - Whether to show settings button (default: false)
    */
-  private static showUserNotification(message: string, level: LogLevel): void {
+  public static showNotification(
+    message: string,
+    level: LogLevel,
+    openConfig: boolean = false
+  ): void {
     switch (level) {
       case 'error':
-        vscode.window.showErrorMessage(`Extension: ${message}`)
+        vscode.window.showErrorMessage(message)
         break
       case 'warning':
-        vscode.window.showWarningMessage(`Extension: ${message}`)
+        if (openConfig) {
+          vscode.window.showWarningMessage(message, vscodeSettingsButton)
+        } else {
+          vscode.window.showWarningMessage(message)
+        }
         break
       case 'info':
-        vscode.window.showInformationMessage(`Extension: ${message}`)
+        vscode.window.showInformationMessage(message)
         break
     }
   }

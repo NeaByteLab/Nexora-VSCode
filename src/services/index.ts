@@ -2,4 +2,4 @@
  * Services module exports
  * Provides access to external service integrations
  */
-export { default as OllamaService } from '@services/OllamaService'
+export { default as OllamaService } from '@services/Ollama'

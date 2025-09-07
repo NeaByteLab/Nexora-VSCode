@@ -1,11 +1,18 @@
 {
   "name": "nexora-vscode",
-  "displayName": "Nexora-VSCode",
-  "description": "AI Inline Code Complettion",
+  "displayName": "Nexora AI",
+  "description": "AI Inline Code Completion",
   "version": "0.0.1",
+  "publisher": "nexora",
   "engines": {
     "vscode": "^1.103.0"
   },
+  "activationEvents": [
+    "onCommand:Nexora-AI.OpenConfig",
+    "onCommand:Nexora-AI.CheckConfig",
+    "onCommand:Nexora-AI.SelectModel",
+    "onCommand:Nexora-AI.TestService"
+  ],
   "categories": [
     "Other"
   ],
@@ -13,28 +20,36 @@
   "contributes": {
     "commands": [
       {
-        "command": "nexora-vscode.checkConfig",
+        "command": "Nexora-AI.OpenConfig",
+        "title": "Nexora: Open Configuration"
+      },
+      {
+        "command": "Nexora-AI.CheckConfig",
         "title": "Nexora: Check Configuration"
       },
       {
-        "command": "nexora-vscode.selectModel",
+        "command": "Nexora-AI.SelectModel",
         "title": "Nexora: Select Available Model"
+      },
+      {
+        "command": "Nexora-AI.TestService",
+        "title": "Nexora: Test Service Availability"
       }
     ],
     "configuration": {
-      "title": "Nexora VSCode",
+      "title": "Nexora AI",
       "properties": {
-        "nexora-vscode.urlHost": {
+        "Nexora-AI.UrlHost": {
           "type": "string",
           "default": "http://localhost:11434",
           "description": "Service host URL for AI integration"
         },
-        "nexora-vscode.databasePath": {
+        "Nexora-AI.DatabasePath": {
           "type": "string",
           "default": "~/nexora.db",
           "description": "Path to SQLite database file (e.g. ~/nexora.db or /path/to/nexora.db)"
         },
-        "nexora-vscode.selectedModel": {
+        "Nexora-AI.SelectedModel": {
           "type": "string",
           "default": "",
           "description": "Selected model for code completion"
@@ -68,6 +83,7 @@
   "dependencies": {
     "better-sqlite3": "^12.2.0",
     "knex": "^3.1.0",
-    "ollama": "^0.5.17"
+    "ollama": "^0.5.17",
+    "sqlite3": "^5.1.7"
   }
 }

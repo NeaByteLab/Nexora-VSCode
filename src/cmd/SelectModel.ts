@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { ConfigManager } from '@config/index'
-import OllamaService from '@services/OllamaService'
-import ErrorHandler from '@utils/ErrorHandler'
+import { OllamaService } from '@services/index'
+import { ErrorHandler } from '@utils/index'
 
 /**
  * Global state variables
@@ -11,7 +11,7 @@ let listModels: string[] = []
 
 /**
  * Displays model selection interface to users
- * Shows available models and allows selection through VSCode quick pick
+ * Shows available models and allows selection through quick pick interface
  * Automatically selects first model if none is currently selected
  * @param ollamaService - Service instance for retrieving available models
  */

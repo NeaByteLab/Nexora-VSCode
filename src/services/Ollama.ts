@@ -1,6 +1,6 @@
 import { Ollama } from 'ollama'
-import { AccountData } from '@interfaces/index'
-import { AccountManager, ConfigManager } from '@config/index'
+import { AccountData, CompletionResult } from '@interfaces/index'
+import { KnexManager, ConfigManager } from '@config/index'
 import { ErrorHandler, Validator } from '@utils/index'
 
 /**
@@ -19,12 +19,12 @@ export default class OllamaService {
   /** Context string for fetching models operation */
   private static readonly FETCHING_MODELS_CONTEXT: string = 'fetching models'
   /** Service host URL */
-  private host: string
+  private urlHost: string
   /** Database file path */
   private databasePath: string
   /** Currently selected model name */
   private selectedModel: string
-  /** Ollama service instance */
+  /** Model service instance */
   private ollama: Ollama
 
   /**
@@ -32,16 +32,44 @@ export default class OllamaService {
    * Sets up configuration and registers change listeners
    */
   constructor() {
-    this.host = ConfigManager.getHost()
+    this.urlHost = ConfigManager.getHost()
     this.databasePath = ConfigManager.getDatabasePath()
     this.selectedModel = ConfigManager.getSelectedModel()
-    this.ollama = new Ollama({ host: this.host })
+    this.ollama = new Ollama({ host: this.urlHost })
     ConfigManager.onDidChangeConfiguration(() => {
-      this.host = ConfigManager.getHost()
+      this.urlHost = ConfigManager.getHost()
       this.databasePath = ConfigManager.getDatabasePath()
       this.selectedModel = ConfigManager.getSelectedModel()
-      this.ollama = new Ollama({ host: this.host })
+      this.ollama = new Ollama({ host: this.urlHost })
     })
+  }
+
+  /**
+   * Handles service errors with appropriate error messages
+   * @param error - The error to handle
+   */
+  private handleError(error: unknown): void {
+    if (error instanceof Error) {
+      if (error.message.includes('fetch failed') || error.message.includes('ECONNREFUSED')) {
+        ErrorHandler.handleOllamaError(
+          new Error(
+            `${OllamaService.CONNECTION_ERROR_MESSAGE} ${this.urlHost}. ${OllamaService.CONNECTION_HELP_MESSAGE}`
+          ),
+          OllamaService.FETCHING_MODELS_CONTEXT
+        )
+      } else if (error.message.includes('timeout')) {
+        ErrorHandler.handleOllamaError(
+          new Error(
+            `${OllamaService.TIMEOUT_ERROR_MESSAGE} ${this.urlHost}. ${OllamaService.TIMEOUT_HELP_MESSAGE}`
+          ),
+          OllamaService.FETCHING_MODELS_CONTEXT
+        )
+      } else {
+        ErrorHandler.handleOllamaError(error, OllamaService.FETCHING_MODELS_CONTEXT)
+      }
+    } else {
+      ErrorHandler.handleOllamaError(error, OllamaService.FETCHING_MODELS_CONTEXT)
+    }
   }
 
   /**
@@ -53,27 +81,7 @@ export default class OllamaService {
       const response: { models?: Array<{ name: string }> } = await this.ollama.list()
       return response.models?.map((model: { name: string }) => model.name) ?? []
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        if (error.message.includes('fetch failed') || error.message.includes('ECONNREFUSED')) {
-          ErrorHandler.handleOllamaError(
-            new Error(
-              `${OllamaService.CONNECTION_ERROR_MESSAGE} ${this.host}. ${OllamaService.CONNECTION_HELP_MESSAGE}`
-            ),
-            OllamaService.FETCHING_MODELS_CONTEXT
-          )
-        } else if (error.message.includes('timeout')) {
-          ErrorHandler.handleOllamaError(
-            new Error(
-              `${OllamaService.TIMEOUT_ERROR_MESSAGE} ${this.host}. ${OllamaService.TIMEOUT_HELP_MESSAGE}`
-            ),
-            OllamaService.FETCHING_MODELS_CONTEXT
-          )
-        } else {
-          ErrorHandler.handleOllamaError(error, OllamaService.FETCHING_MODELS_CONTEXT)
-        }
-      } else {
-        ErrorHandler.handleOllamaError(error, OllamaService.FETCHING_MODELS_CONTEXT)
-      }
+      this.handleError(error)
       return []
     }
   }
@@ -83,18 +91,23 @@ export default class OllamaService {
    * @param prompt - Text prompt to send to model
    * @returns Promise resolving to generated response text
    */
-  public async generateCompletion(prompt: string): Promise<string> {
+  public async generateCompletion(prompt: string): Promise<CompletionResult> {
     try {
       this.ollama = await this.getInstance()
-      const response: { response: string } = await this.ollama.generate({
+      const data: { response: string } = await this.ollama.generate({
         model: this.selectedModel,
         prompt,
+        options: {
+          temperature: 0.1
+        },
+        keep_alive: '5m',
+        think: false,
         stream: false
       })
-      return response.response
+      return data.response
     } catch (error: unknown) {
-      ErrorHandler.handleOllamaError(error, 'generating completion')
-      return ''
+      this.handleError(error)
+      return null
     }
   }
 
@@ -104,13 +117,14 @@ export default class OllamaService {
    * @returns Promise resolving to configured service instance
    */
   private async getInstance(): Promise<Ollama> {
-    if (Validator.isOllamaUrl(this.host) && Validator.isValidPath(this.databasePath)) {
+    if (Validator.isOllamaUrl(this.urlHost) && Validator.isValidPath(this.databasePath)) {
       try {
-        const account: AccountData | null = await AccountManager.getRandomAccount()
+        const knexManager: KnexManager = new KnexManager(this.databasePath)
+        const accountResult: AccountData | null = await knexManager.getRandomAccount()
         return new Ollama({
-          host: this.host,
+          host: this.urlHost,
           headers: {
-            Authorization: `Bearer ${account?.api_key}`,
+            Authorization: `Bearer ${accountResult?.api_key}`,
             'Content-Type': 'application/json'
           }
         })
@@ -119,7 +133,7 @@ export default class OllamaService {
       }
     }
     return new Ollama({
-      host: this.host,
+      host: this.urlHost,
       headers: {
         'Content-Type': 'application/json'
       }
