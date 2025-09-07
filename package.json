@@ -21,19 +21,59 @@
     "commands": [
       {
         "command": "Nexora-AI.OpenConfig",
-        "title": "Nexora: Open Configuration"
+        "title": "Open Configuration",
+        "category": "Nexora AI"
       },
       {
         "command": "Nexora-AI.CheckConfig",
-        "title": "Nexora: Check Configuration"
+        "title": "Check Configuration",
+        "category": "Nexora AI"
       },
       {
         "command": "Nexora-AI.SelectModel",
-        "title": "Nexora: Select Available Model"
+        "title": "Select Available Model",
+        "category": "Nexora AI"
       },
       {
         "command": "Nexora-AI.TestService",
-        "title": "Nexora: Test Service Availability"
+        "title": "Test Service Availability",
+        "category": "Nexora AI"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "nexora-ai-submenu",
+          "group": "nexora-ai",
+          "when": "editorTextFocus"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "nexora-ai-submenu",
+          "group": "nexora-ai"
+        }
+      ],
+      "nexora-ai-submenu": [
+        {
+          "command": "Nexora-AI.OpenConfig"
+        },
+        {
+          "command": "Nexora-AI.CheckConfig"
+        },
+        {
+          "command": "Nexora-AI.SelectModel"
+        },
+        {
+          "command": "Nexora-AI.TestService"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "nexora-ai-submenu",
+        "label": "Nexora AI",
+        "icon": "$(robot)"
       }
     ],
     "configuration": {
