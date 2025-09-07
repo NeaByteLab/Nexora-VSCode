@@ -14,10 +14,34 @@
   "contributes": {
     "commands": [
       {
-        "command": "nexora-vscode.helloWorld",
-        "title": "Hello World"
+        "command": "nexora-vscode.checkConfig",
+        "title": "Nexora: Check Configuration"
+      },
+      {
+        "command": "nexora-vscode.selectModel",
+        "title": "Nexora: Select Available Model"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Nexora VSCode",
+      "properties": {
+        "nexora-vscode.host": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Ollama host URL for AI integration"
+        },
+        "nexora-vscode.databasePath": {
+          "type": "string",
+          "default": "~/nexora.db",
+          "description": "Path to SQLite database file (e.g., ~/nexora.db or /path/to/nexora.db)"
+        },
+        "nexora-vscode.selectedModel": {
+          "type": "string",
+          "default": "",
+          "description": "Selected Ollama model for code completion"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
@@ -41,5 +65,10 @@
     "prettier": "^3.6.2",
     "tsc-alias": "^1.8.16",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.2.0",
+    "knex": "^3.1.0",
+    "ollama": "^0.5.17"
   }
 }

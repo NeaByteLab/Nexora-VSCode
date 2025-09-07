@@ -8,7 +8,11 @@
     "rootDir": "src",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@cmd/*": ["src/cmd/*"],
+      "@config/*": ["src/config/*"],
+      "@interfaces/*": ["src/interfaces/*"],
+      "@services/*": ["src/services/*"],
+      "@utils/*": ["src/utils/*"]
     },
     "tsBuildInfoFile": ".tsbuildinfo",
     "importsNotUsedAsValues": "remove",
@@ -39,7 +43,7 @@
     "sourceMap": false,
     "strict": true,
     "useUnknownInCatchVariables": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"]
