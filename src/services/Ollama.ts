@@ -1,11 +1,11 @@
-import { Ollama } from 'ollama'
-import { AccountData, CompletionResult } from '@interfaces/index'
+import { Ollama, ChatResponse } from 'ollama'
+import { ChatRequest, AccountData, CompletionResult } from '@interfaces/index'
 import { KnexManager, ConfigManager } from '@config/index'
 import { ErrorHandler, Validator } from '@utils/index'
 
 /**
- * API service for model integration
- * Manages communication with local or remote model instances
+ * Service for AI model communication
+ * Handles interactions with local or remote model services
  */
 export default class OllamaService {
   /** Error message for connection issues */
@@ -28,8 +28,8 @@ export default class OllamaService {
   private ollama: Ollama
 
   /**
-   * Creates a new service instance
-   * Sets up configuration and registers change listeners
+   * Initializes the service instance
+   * @description Configures the service and sets up configuration change listeners
    */
   constructor() {
     this.urlHost = ConfigManager.getHost()
@@ -45,8 +45,8 @@ export default class OllamaService {
   }
 
   /**
-   * Handles service errors with appropriate error messages
-   * @param error - The error to handle
+   * Processes service errors and provides user-friendly messages
+   * @param error - The error object to process
    */
   private handleError(error: unknown): void {
     if (error instanceof Error) {
@@ -73,8 +73,8 @@ export default class OllamaService {
   }
 
   /**
-   * Gets available models from the service
-   * @returns Promise resolving to array of model names
+   * Retrieves available models from the service
+   * @returns Promise that resolves to an array of model names
    */
   public async getModels(): Promise<string[]> {
     try {
@@ -88,23 +88,29 @@ export default class OllamaService {
 
   /**
    * Generates text completion using the model service
-   * @param prompt - Text prompt to send to model
-   * @returns Promise resolving to generated response text
+   * @param prompt - Text input to send to the model
+   * @param format - Optional format specification for structured output
+   * @returns Promise that resolves to the generated response or structured data
    */
-  public async generateCompletion(prompt: string): Promise<CompletionResult> {
+  public async generateCompletion(
+    prompt: string,
+    format?: object
+  ): Promise<ChatResponse | CompletionResult> {
     try {
       this.ollama = await this.getInstance()
-      const data: { response: string } = await this.ollama.generate({
+      const chatRequest: ChatRequest = {
         model: this.selectedModel,
-        prompt,
+        messages: [{ role: 'user', content: prompt }],
         options: {
           temperature: 0.1
         },
         keep_alive: '5m',
         think: false,
-        stream: false
-      })
-      return data.response
+        stream: false,
+        ...(format && { format })
+      }
+      const data: ChatResponse = await this.ollama.chat({ ...chatRequest, stream: false })
+      return format ? data : data.message.content
     } catch (error: unknown) {
       this.handleError(error)
       return null
@@ -112,9 +118,9 @@ export default class OllamaService {
   }
 
   /**
-   * Gets service instance with proper configuration
-   * Uses account authentication for remote URLs or basic config for local instances
-   * @returns Promise resolving to configured service instance
+   * Creates a configured service instance
+   * @description Applies authentication for remote services or basic configuration for local instances
+   * @returns Promise that resolves to a configured service instance
    */
   private async getInstance(): Promise<Ollama> {
     if (Validator.isOllamaUrl(this.urlHost) && Validator.isValidPath(this.databasePath)) {

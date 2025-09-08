@@ -1,18 +1,39 @@
 /**
  * Log level type for error handling
- * Defines available logging severity levels
+ * @description Defines available logging severity levels
  */
 export type LogLevel = 'error' | 'warning' | 'info'
 
 /**
  * Result type for completion operations
- * Represents the response from text generation services
+ * @description Represents the response from text generation services
  */
 export type CompletionResult = string | null
 
 /**
+ * Chat request structure for model communication
+ * @description Defines the structure for sending chat requests to AI models
+ */
+export interface ChatRequest {
+  /** Model identifier */
+  model: string
+  /** Array of conversation messages */
+  messages: Array<{ role: string; content: string }>
+  /** Generation options */
+  options: { temperature: number }
+  /** Keep alive duration */
+  keep_alive: string
+  /** Thinking mode setting */
+  think: boolean | 'low' | 'medium' | 'high'
+  /** Stream response flag */
+  stream: boolean
+  /** Optional output format specification */
+  format?: object
+}
+
+/**
  * Account data structure for user authentication and rate limiting
- * Contains user credentials and API usage limits
+ * @description Contains user credentials and API usage limits
  */
 export interface AccountData {
   /** User email address */
@@ -29,7 +50,7 @@ export interface AccountData {
 
 /**
  * Configuration data structure
- * Contains extension configuration settings
+ * @description Contains application configuration settings
  */
 export interface ConfigurationData {
   /** Host URL */
@@ -42,7 +63,7 @@ export interface ConfigurationData {
 
 /**
  * File context data structure
- * Contains information about the active file and cursor position
+ * @description Contains information about the active file and cursor position
  */
 export interface FileContextData {
   /** Full file path */

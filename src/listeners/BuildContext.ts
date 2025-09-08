@@ -2,7 +2,7 @@ import { FileContextData } from '@interfaces/index'
 
 /**
  * Creates a context string from file data and diagnostics
- *
+ * @description Generates a formatted context string for code generation requests
  * @param context - File context data containing file information and metadata
  * @param errorCount - Number of errors in the current file
  * @param warningCount - Number of warnings in the current file
@@ -24,12 +24,32 @@ You are AI Agent that can create code auto completion & code generation.
 
 # Rules you must follow
 - Follow the existing code style and naming conventions
-- Use best practices and clean code principles
-- Write only necessary, high-quality code
 - Maintain consistency with the existing codebase
+- Maintain proper indentation matching the surrounding code
+- If code already good, keep it as is
+- Don't reformat unrelated code
+- Write only necessary, high-quality code
+- Use best practices and clean code principles
 - Provide clear, readable solutions
+- Prefer multi-line over one-liners/complex ternaries
+- Include appropriate error handling if completing functions/methods
+- Only add imports if absolutely necessary for the completion
 
-# Trigger context
+# IMPORTANT: Response Format
+- Return ONLY the code
+- No explanations, comments, or additional text
+- No markdown code blocks or formatting
+- Just the raw code that should replace or complete the current position
+
+You must respond with valid JSON in the following format:
+{
+  "lineStart": number,
+  "lineEnd": number, 
+  "filePath": "string",
+  "content": "string"
+}
+
+# Trigger Context
 - File: ${context.fileName} (${context.languageId})
 - Path: ${context.filePath}
 - Position: Line ${context.lineNumber}, Char ${context.characterPosition}
@@ -41,12 +61,12 @@ You are AI Agent that can create code auto completion & code generation.
 # Diagnostics
 ${diagnostics || 'No diagnostics found'}
 
-# Code before cursor (30 lines before current line)
+# Code Before Cursor (30 lines before current line)
 \`\`\`${context.languageId}
 ${codeBefore}
 \`\`\`
 
-# Code after cursor (30 lines after current line)
+# Code After Cursor (30 lines after current line)
 \`\`\`${context.languageId}
 ${codeAfter}
 \`\`\`

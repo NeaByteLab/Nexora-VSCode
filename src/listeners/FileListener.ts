@@ -1,15 +1,14 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { FileContextData } from '@interfaces/index'
-import { BuildContext } from '@listeners/index'
+import { BuildContext, ProviderContext } from '@listeners/index'
 import { OllamaService } from '@services/index'
 import { ErrorHandler } from '@utils/index'
 import { configSection } from '@constants/index'
 
 /**
- * Monitors file changes and cursor position in the active text editor.
- * Captures file context data including content, position, and diagnostics.
- * Provides real-time file monitoring for editor events and document changes.
+ * Monitors file changes and cursor position in the active text editor
+ * @description Captures file context data including content, position, and diagnostics
  */
 export default class FileListener {
   /** Service instance for handling operations */
@@ -22,7 +21,7 @@ export default class FileListener {
   private readonly debounceDelay: number = 300
 
   /**
-   * Creates a new FileListener instance.
+   * Initializes a new FileListener instance
    * @param ollamaService - Service instance for handling operations
    * @param context - Extension context for managing subscriptions
    */
@@ -32,9 +31,8 @@ export default class FileListener {
   }
 
   /**
-   * Starts monitoring file changes and cursor position changes.
-   * Registers event listeners for active editor changes and cursor movements.
-   * Sets up context state and initializes file monitoring.
+   * Starts monitoring file changes and cursor position changes
+   * @description Registers event listeners for active editor changes and cursor movements
    * @returns Promise that resolves when initialization is complete
    */
   public async start(): Promise<void> {
@@ -82,18 +80,16 @@ export default class FileListener {
   }
 
   /**
-   * Stops monitoring and clears context state.
-   * Removes event listeners and resets configuration.
+   * Stops monitoring and clears context state
+   * @description Removes event listeners and resets configuration
    * @returns Promise that resolves when cleanup is complete
    */
   public async stop(): Promise<void> {
     try {
-      // Clear debounce timer if it exists
       if (this.debounceTimer !== undefined) {
         clearTimeout(this.debounceTimer)
         this.debounceTimer = undefined
       }
-
       await vscode.commands.executeCommand(
         'setContext',
         `${configSection}.FileListenerActive`,
@@ -105,8 +101,8 @@ export default class FileListener {
   }
 
   /**
-   * Determines if context should be captured based on editor state.
-   * Checks if there is an active editor and the window is focused.
+   * Determines if context should be captured based on editor state
+   * @description Checks if there is an active editor and the window is focused
    * @returns True if context should be captured, false otherwise
    */
   private shouldCaptureContext(): boolean {
@@ -114,7 +110,7 @@ export default class FileListener {
   }
 
   /**
-   * Retrieves the service instance.
+   * Retrieves the service instance
    * @returns The OllamaService instance used by this listener
    */
   public getService(): OllamaService {
@@ -122,8 +118,8 @@ export default class FileListener {
   }
 
   /**
-   * Retrieves diagnostics for the specified document.
-   * Gets language server diagnostics including errors and warnings.
+   * Retrieves diagnostics for the specified document
+   * @description Gets language server diagnostics including errors and warnings
    * @param document - The document to retrieve diagnostics for
    * @returns Array of diagnostic information, empty array on error
    */
@@ -138,8 +134,8 @@ export default class FileListener {
   }
 
   /**
-   * Captures file context data from the specified editor.
-   * Extracts file information, cursor position, and diagnostics.
+   * Captures file context data from the specified editor
+   * @description Extracts file information, cursor position, and diagnostics
    * @param editor - The text editor to capture context from
    */
   private captureFileContext(editor: vscode.TextEditor): void {
@@ -183,8 +179,8 @@ export default class FileListener {
   }
 
   /**
-   * Processes and logs file context data to the console.
-   * Formats diagnostics and code context for logging output.
+   * Processes and logs file context data to the console
+   * @description Formats diagnostics and code context for logging output
    * @param context - The file context data to process
    * @param diagnostics - Document diagnostics
    * @param errorCount - Number of errors in the document
@@ -233,7 +229,12 @@ export default class FileListener {
             codeAfter: string
           ) => string
         )(context, errorCount, warningCount, diagnosticsList, codeBefore, codeAfter)
-        console.log(contextString)
+        ;(ProviderContext as (ollamaService: OllamaService, prompt: string) => Promise<void>)(
+          this.ollamaService,
+          contextString
+        ).catch((error: unknown) => {
+          ErrorHandler.handle(error, 'provider context', true, 'error')
+        })
         this.debounceTimer = undefined
       }, this.debounceDelay)
     } catch (error: unknown) {
