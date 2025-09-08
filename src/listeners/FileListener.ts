@@ -1,10 +1,9 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { FileContextData } from '@interfaces/index'
-import { buildUserContext, ProviderContext } from '@listeners/index'
+import { buildUserContext, ProviderContext, InlineSuggestion, QuickDiff } from '@listeners/index'
 import { OllamaService } from '@services/index'
 import { ErrorHandler } from '@utils/index'
-import { configSection } from '@constants/index'
 
 /**
  * Monitors file changes and cursor position in the active text editor
@@ -15,6 +14,10 @@ export default class FileListener {
   private readonly ollamaService: OllamaService
   /** Extension context for managing subscriptions */
   private readonly context: vscode.ExtensionContext
+  /** Inline suggestion service for code suggestions */
+  private readonly inlineSuggestion: InlineSuggestion
+  /** Quick diff service for code suggestions */
+  private readonly quickDiffService: QuickDiff
   /** Debounce timer for file context handling */
   private debounceTimer: ReturnType<typeof setTimeout> | undefined
   /** Debounce delay in milliseconds */
@@ -34,6 +37,8 @@ export default class FileListener {
   constructor(ollamaService: OllamaService, context: vscode.ExtensionContext) {
     this.ollamaService = ollamaService
     this.context = context
+    this.quickDiffService = new QuickDiff()
+    this.inlineSuggestion = new InlineSuggestion(this.quickDiffService, this.context)
   }
 
   /**
@@ -41,13 +46,15 @@ export default class FileListener {
    * @description Registers event listeners for active editor changes and cursor movements
    * @returns Promise that resolves when initialization is complete
    */
-  public async start(): Promise<void> {
+  public start(): void {
     try {
-      await vscode.commands.executeCommand(
-        'setContext',
-        `${configSection}.FileListenerActive`,
-        true
-      )
+      this.context.subscriptions.push(this.quickDiffService.register(this.context))
+      const inlineCompletionDisposable: vscode.Disposable =
+        vscode.languages.registerInlineCompletionItemProvider(
+          { scheme: 'file' },
+          this.inlineSuggestion
+        )
+      this.context.subscriptions.push(inlineCompletionDisposable)
       const activeEditorListener: vscode.Disposable = vscode.window.onDidChangeActiveTextEditor(
         (editor: vscode.TextEditor | undefined) => {
           if (editor !== undefined) {
@@ -93,7 +100,7 @@ export default class FileListener {
    * @description Removes event listeners and resets configuration
    * @returns Promise that resolves when cleanup is complete
    */
-  public async stop(): Promise<void> {
+  public stop(): void {
     try {
       if (this.debounceTimer !== undefined) {
         clearTimeout(this.debounceTimer)
@@ -104,11 +111,6 @@ export default class FileListener {
         this.activityTimer = undefined
       }
       this.isListenerActive = false
-      await vscode.commands.executeCommand(
-        'setContext',
-        `${configSection}.FileListenerActive`,
-        false
-      )
     } catch (error: unknown) {
       ErrorHandler.handle(error, 'file listener stop', true, 'error')
     }
@@ -220,7 +222,10 @@ export default class FileListener {
         currentLineText: document.lineAt(position.line).text,
         textBeforeCursor: document.getText(new vscode.Range(new vscode.Position(0, 0), position)),
         textAfterCursor: document.getText(
-          new vscode.Range(position, new vscode.Position(totalLines, 0))
+          new vscode.Range(
+            position,
+            new vscode.Position(totalLines - 1, document.lineAt(totalLines - 1).text.length)
+          )
         ),
         totalLines,
         isDirty
@@ -250,6 +255,15 @@ export default class FileListener {
         clearTimeout(this.debounceTimer)
       }
       this.debounceTimer = setTimeout(() => {
+        if (!this.quickDiffService.hasOriginalContent(context.filePath)) {
+          const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
+          if (activeEditor) {
+            this.quickDiffService.storeOriginalContent(
+              context.filePath,
+              activeEditor.document.getText()
+            )
+          }
+        }
         const diagnosticsList: string = diagnostics
           .map((d: vscode.Diagnostic) => {
             const line: number = d.range.start.line + 1
@@ -266,12 +280,9 @@ export default class FileListener {
             return `- ${d.message} ${source}(${rules}) [Ln: ${line}, Col: ${col}]`
           })
           .join('\n')
-        const linesBefore: string[] = context.textBeforeCursor.split('\n')
-        const codeBefore: string = linesBefore
-          .slice(Math.max(0, linesBefore.length - 30))
-          .join('\n')
+        const codeBefore: string = context.textBeforeCursor
         const linesAfter: string[] = context.textAfterCursor.split('\n')
-        const codeAfter: string = linesAfter.slice(0, Math.min(30, linesAfter.length)).join('\n')
+        const codeAfter: string = linesAfter.slice(0, Math.min(50, linesAfter.length)).join('\n')
         const contextString: string = (
           buildUserContext as (
             context: FileContextData,
@@ -282,10 +293,13 @@ export default class FileListener {
             codeAfter: string
           ) => string
         )(context, errorCount, warningCount, diagnosticsList, codeBefore, codeAfter)
-        ;(ProviderContext as (ollamaService: OllamaService, prompt: string) => Promise<void>)(
-          this.ollamaService,
-          contextString
-        ).catch((error: unknown) => {
+        ;(
+          ProviderContext as (
+            ollamaService: OllamaService,
+            prompt: string,
+            inlineSuggestion: InlineSuggestion
+          ) => Promise<void>
+        )(this.ollamaService, contextString, this.inlineSuggestion).catch((error: unknown) => {
           ErrorHandler.handle(error, 'provider context', true, 'error')
         })
         this.debounceTimer = undefined

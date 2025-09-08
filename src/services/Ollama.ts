@@ -99,20 +99,22 @@ export default class OllamaService {
   ): Promise<ChatResponse | CompletionResult> {
     try {
       this.ollama = await this.getInstance()
+      const chatMessages: Array<{ role: string; content: string }> = []
       const systemContext: string = (buildSystemContext as () => string)()
+      if (format) {
+        chatMessages.push({ role: 'system', content: systemContext })
+      }
+      chatMessages.push({ role: 'user', content: prompt })
       const chatRequest: ChatRequest = {
         model: this.selectedModel,
-        messages: [
-          { role: 'system', content: systemContext },
-          { role: 'user', content: prompt }
-        ],
+        messages: chatMessages,
         options: {
           temperature: 0.1
         },
         keep_alive: '5m',
         think: false,
         stream: false,
-        ...(format && { format })
+        ...format ? { format } : {}
       }
       const data: ChatResponse = await this.ollama.chat({ ...chatRequest, stream: false })
       return format ? data : data.message.content

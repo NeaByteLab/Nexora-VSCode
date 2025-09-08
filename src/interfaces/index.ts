@@ -21,6 +21,8 @@ export interface GenerationResult {
   lineEnd: number
   /** Content to write to the file */
   content: string
+  /** Title of the code suggestion and completion */
+  title: string
 }
 
 /**

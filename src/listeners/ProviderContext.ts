@@ -1,17 +1,24 @@
+import * as vscode from 'vscode'
 import { z } from 'zod'
 import { ChatResponse } from 'ollama'
-import { generationSchema, generationFormat } from '@schemas/index'
-import { OllamaService } from '@services/index'
 import { CompletionResult, GenerationResult } from '@interfaces/index'
+import { generationSchema, generationFormat } from '@schemas/index'
+import { InlineSuggestion } from '@listeners/index'
+import { OllamaService } from '@services/index'
 
 /**
- * Processes code generation request and logs the response
- * @description Handles code generation requests and validates structured responses
+ * Processes code generation request and applies suggestions
+ * @description Handles code generation requests, validates responses, and applies changes to the editor
  * @param ollamaService - Service instance for generating completions
  * @param prompt - Input prompt for code generation
+ * @param inlineSuggestion - Inline suggestion service for managing suggestions
  * @returns Promise that resolves when processing is complete
  */
-export default async function (ollamaService: OllamaService, prompt: string): Promise<void> {
+export default async function (
+  ollamaService: OllamaService,
+  prompt: string,
+  inlineSuggestion: InlineSuggestion
+): Promise<void> {
   const resCompletion: ChatResponse | CompletionResult = await ollamaService.generateCompletion(
     prompt,
     generationFormat
@@ -24,10 +31,13 @@ export default async function (ollamaService: OllamaService, prompt: string): Pr
         parsedContent
       ) as GenerationResult
       if (validatedData.content && validatedData.content.length > 0) {
-        console.log('Content:', validatedData.content)
+        const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
+        if (activeEditor) {
+          inlineSuggestion.showSuggestion(validatedData, activeEditor.document.fileName)
+        }
       }
     } catch {
-      // Skip Error Handling
+      // Skip Error Handler
     }
   }
 }

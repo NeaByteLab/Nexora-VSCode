@@ -20,6 +20,23 @@
   ],
   "main": "./dist/Extension.js",
   "contributes": {
+    "keybindings": [
+      {
+        "command": "Nexora-AI.AcceptSuggestion",
+        "key": "ctrl+shift+a",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "Nexora-AI.RejectSuggestion",
+        "key": "ctrl+shift+r",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "Nexora-AI.ShowDiff",
+        "key": "ctrl+shift+d",
+        "when": "editorTextFocus"
+      }
+    ],
     "commands": [
       {
         "command": "Nexora-AI.OpenConfig",
