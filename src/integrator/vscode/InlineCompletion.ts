@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { vscodeWhitelistExt } from '@constants/index'
-import { InlineCompletionProvider } from '@integrator/index'
+import { InlineCompletionProvider, KeyboardBinding } from '@integrator/index'
 import { OllamaService } from '@services/index'
 import { ErrorHandler } from '@utils/index'
 
@@ -13,6 +13,8 @@ export default class InlineCompletion {
   private readonly context: vscode.ExtensionContext
   /** Inline suggestion service for code suggestions */
   private readonly inlineCompletionProvider: InlineCompletionProvider
+  /** Keyboard binding service for suggestion actions */
+  private readonly keyboardBinding: KeyboardBinding
 
   /**
    * Initializes a new InlineCompletion instance
@@ -21,15 +23,18 @@ export default class InlineCompletion {
    */
   constructor(ollamaService: OllamaService, context: vscode.ExtensionContext) {
     this.context = context
-    this.inlineCompletionProvider = new InlineCompletionProvider(ollamaService, this.context)
+    this.inlineCompletionProvider = new InlineCompletionProvider(ollamaService)
+    this.keyboardBinding = new KeyboardBinding(context)
   }
 
   /**
    * Starts the completion API service
-   * @description Registers inline completion providers for supported file types
+   * @description Registers inline completion providers for supported file types and sets up keyboard bindings
+   * @returns void
    */
   public start(): void {
     try {
+      this.keyboardBinding.setup()
       const completionDisposable: vscode.Disposable =
         vscode.languages.registerInlineCompletionItemProvider(
           {

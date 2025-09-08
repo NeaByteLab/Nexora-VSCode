@@ -25,7 +25,7 @@ export const generationSchema: z.ZodEffects<
     /** Ending character position for code replacement (0-based index) */
     charEnd: z.number().int().min(0).describe('Ending character position for code replacement'),
     /** Generated code content to insert */
-    content: z.string().min(10).max(1000).describe('Generated code content to insert'),
+    content: z.string().min(10).describe('Generated code content to insert'),
     /** Descriptive title of the code suggestion */
     title: z.string().min(10).max(50).describe('Descriptive title of the code suggestion')
   })

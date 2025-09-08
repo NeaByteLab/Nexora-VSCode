@@ -1,10 +1,10 @@
 import { z } from 'zod'
 import * as vscode from 'vscode'
 import { GenerationResult } from '@interfaces/index'
-import { ContextBuilder, KeyboardBinding, StatusBarItem } from '@integrator/index'
+import { CacheManager, ContextBuilder, StatusBarItem } from '@integrator/index'
 import { OllamaService } from '@services/index'
 import { generationSchema, generationFormat } from '@schemas/index'
-import { ErrorHandler } from '@utils/index'
+import { configSection } from '@constants/index'
 
 /**
  * Manages inline code suggestions using the editor's InlineCompletionItemProvider
@@ -13,22 +13,23 @@ import { ErrorHandler } from '@utils/index'
 export default class InlineCompletionProvider implements vscode.InlineCompletionItemProvider {
   /** Ollama service for AI generation */
   private readonly ollamaService: OllamaService
-  /** Key binding API for suggestion actions */
-  private readonly keyboardBinding: KeyboardBinding
   /** Status bar item for suggestion info */
   private readonly statusBarItem: StatusBarItem | undefined
   /** Ongoing AI generation request */
   private ollamaOngoing: Promise<GenerationResult | null> | null = null
+  /** Displayed completion */
+  private ollamaOnreview: boolean = false
+  /** Completion accept cache */
+  public ollamaContent: GenerationResult | null = null
 
   /**
    * Initializes a new InlineCompletionProvider instance
    * @param ollamaService - Service instance for AI generation
    * @param context - Extension context for managing subscriptions
    */
-  constructor(ollamaService: OllamaService, context: vscode.ExtensionContext) {
+  constructor(ollamaService: OllamaService) {
     this.ollamaService = ollamaService
     this.statusBarItem = new StatusBarItem()
-    this.keyboardBinding = new KeyboardBinding(context)
   }
 
   /**
@@ -46,6 +47,9 @@ export default class InlineCompletionProvider implements vscode.InlineCompletion
     token: vscode.CancellationToken
   ): Promise<vscode.InlineCompletionItem[] | null> {
     try {
+      if (this.ollamaOnreview) {
+        this.handleEvent('dismiss')
+      }
       const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
       if (!activeEditor || activeEditor.document.fileName !== document.fileName) {
         return null
@@ -55,33 +59,43 @@ export default class InlineCompletionProvider implements vscode.InlineCompletion
         vscode.window.activeTextEditor &&
         !vscode.window.activeTextEditor.selection.isEmpty
       ) {
-        console.log(
-          '[DEBUG] provideInlineCompletionItems(): triggerKind is automatic and selection is not empty'
-        )
         return null
       }
       if (token.isCancellationRequested || this.ollamaOngoing) {
-        console.log(
-          '[DEBUG] provideInlineCompletionItems(): token is cancellation requested or ollama is ongoing'
-        )
         return null
       }
       this.statusBarItem?.show(
-        '$(loading~spin) Generating code suggestion...',
+        '$(loading~spin) Generating Completion...',
         'Accept Suggestion (TAB)'
       )
       this.ollamaOngoing = this.generateCodeCompletion(document, position)
       const completionResult: GenerationResult | null = await this.ollamaOngoing
-      if (!completionResult) {
-        console.log('[DEBUG] provideInlineCompletionItems(): completionResult is null')
+      console.log(`[DEBUG]\n${JSON.stringify(completionResult)}`)
+      if (!completionResult || token.isCancellationRequested) {
         return null
       }
-      this.keyboardBinding.acceptSuggestion()
-      console.log(`[DEBUG] Generated code suggestion:\n${JSON.stringify(completionResult)}`)
-      return []
+      this.statusBarItem?.show(`$(lightbulb) ${configSection}: ${completionResult.title}`)
+      const completionItem: vscode.InlineCompletionItem = new vscode.InlineCompletionItem(
+        typeof completionResult.content === 'string'
+          ? completionResult.content
+          : new vscode.SnippetString(completionResult.content),
+        new vscode.Range(
+          new vscode.Position(completionResult.lineStart - 1, completionResult.charStart),
+          new vscode.Position(completionResult.lineEnd - 1, completionResult.charEnd)
+        ),
+        {
+          title: '',
+          command: `${configSection}.AcceptSuggestion`,
+          arguments: [
+            (): void => {
+              this.handleEvent('accept', [completionItem])
+            }
+          ]
+        }
+      )
+      this.handleEvent('show', [completionItem])
+      return [completionItem]
     } catch {
-      console.log('[DEBUG] provideInlineCompletionItems(): error')
-      this.statusBarItem?.hide()
       return null
     }
   }
@@ -106,23 +120,40 @@ export default class InlineCompletionProvider implements vscode.InlineCompletion
         const parsed: object = JSON.parse(
           (response as { message: { content: string } }).message.content
         ) as object
-        return (generationSchema as z.ZodSchema).parse(parsed) as GenerationResult
+        const parseResponse: GenerationResult = (generationSchema as z.ZodSchema).parse(
+          parsed
+        ) as GenerationResult
+        this.ollamaContent = parseResponse
+        return parseResponse
       }
       return null
-    } catch (error: unknown) {
-      ErrorHandler.handle(error, 'code generation failed', true, 'error')
+    } catch {
       return null
     } finally {
       this.ollamaOngoing = null
+      this.statusBarItem?.hide()
     }
   }
 
   /**
-   * Clears the current suggestion from the editor and status bar
-   * @description Removes suggestion state and hides status bar item
+   * Handles completion events and manages state
+   * @param event - The event type to handle
+   * @param completions - Optional array of completion items for accept events
+   * @description Manages completion state transitions and caching for different event types
    */
-  private clearSuggestion(): void {
-    this.statusBarItem?.hide()
+  private handleEvent(
+    event: 'show' | 'accept' | 'dismiss' | 'accept_word' | 'accept_line',
+    completions?: vscode.InlineCompletionItem[]
+  ): void {
+    if (event === 'accept' && completions) {
+      CacheManager.set(
+        'CompletionAccept',
+        (this.ollamaContent as unknown as Record<string, unknown>) ?? null
+      )
+      this.ollamaOnreview = true
+    } else if (this.ollamaOnreview) {
+      this.ollamaOnreview = false
+    }
   }
 
   /**
@@ -130,7 +161,6 @@ export default class InlineCompletionProvider implements vscode.InlineCompletion
    * @description Clears suggestions and disposes status bar item
    */
   public dispose(): void {
-    this.clearSuggestion()
     this.statusBarItem?.dispose()
   }
 }
