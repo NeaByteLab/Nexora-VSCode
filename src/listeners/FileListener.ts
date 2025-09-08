@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { FileContextData } from '@interfaces/index'
-import { BuildContext, ProviderContext } from '@listeners/index'
+import { buildUserContext, ProviderContext } from '@listeners/index'
 import { OllamaService } from '@services/index'
 import { ErrorHandler } from '@utils/index'
 import { configSection } from '@constants/index'
@@ -220,7 +220,7 @@ export default class FileListener {
         const linesAfter: string[] = context.textAfterCursor.split('\n')
         const codeAfter: string = linesAfter.slice(0, Math.min(30, linesAfter.length)).join('\n')
         const contextString: string = (
-          BuildContext as (
+          buildUserContext as (
             context: FileContextData,
             errorCount: number,
             warningCount: number,

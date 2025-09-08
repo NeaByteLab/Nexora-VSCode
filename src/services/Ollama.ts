@@ -1,5 +1,6 @@
 import { Ollama, ChatResponse } from 'ollama'
 import { ChatRequest, AccountData, CompletionResult } from '@interfaces/index'
+import { buildSystemContext } from '@listeners/BuildContext'
 import { KnexManager, ConfigManager } from '@config/index'
 import { ErrorHandler, Validator } from '@utils/index'
 
@@ -98,9 +99,13 @@ export default class OllamaService {
   ): Promise<ChatResponse | CompletionResult> {
     try {
       this.ollama = await this.getInstance()
+      const systemContext: string = (buildSystemContext as () => string)()
       const chatRequest: ChatRequest = {
         model: this.selectedModel,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [
+          { role: 'system', content: systemContext },
+          { role: 'user', content: prompt }
+        ],
         options: {
           temperature: 0.1
         },

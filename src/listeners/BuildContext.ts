@@ -11,7 +11,7 @@ import { FileContextData } from '@interfaces/index'
  * @param codeAfter - Code content after the current cursor position (30 lines)
  * @returns Context string with template variables replaced by current system information
  */
-export default function (
+export function buildUserContext(
   context: FileContextData,
   errorCount: number,
   warningCount: number,
@@ -20,35 +20,6 @@ export default function (
   codeAfter: string
 ): string {
   const contextString: string = `
-You are AI Agent that can create code auto completion & code generation.
-
-# Rules you must follow
-- Follow the existing code style and naming conventions
-- Maintain consistency with the existing codebase
-- Maintain proper indentation matching the surrounding code
-- If code already good, keep it as is
-- Don't reformat unrelated code
-- Write only necessary, high-quality code
-- Use best practices and clean code principles
-- Provide clear, readable solutions
-- Prefer multi-line over one-liners/complex ternaries
-- Include appropriate error handling if completing functions/methods
-- Only add imports if absolutely necessary for the completion
-
-# IMPORTANT: Response Format
-- Return ONLY the code
-- No explanations, comments, or additional text
-- No markdown code blocks or formatting
-- Just the raw code that should replace or complete the current position
-
-You must respond with valid JSON in the following format:
-{
-  "lineStart": number,
-  "lineEnd": number, 
-  "filePath": "string",
-  "content": "string"
-}
-
 # Trigger Context
 - File: ${context.fileName} (${context.languageId})
 - Path: ${context.filePath}
@@ -72,4 +43,36 @@ ${codeAfter}
 \`\`\`
 `.trim()
   return contextString
+}
+
+export function buildSystemContext(): string {
+  return `
+  You are AI Agent that can create code auto completion & code generation.
+
+  # Rules you must follow
+  - Follow the existing code style and naming conventions
+  - Maintain consistency with the existing codebase
+  - Maintain proper indentation matching the surrounding code
+  - If code already good, keep it as is
+  - Don't reformat unrelated code
+  - Write only necessary, high-quality code
+  - Use best practices and clean code principles
+  - Provide clear, readable solutions
+  - Prefer multi-line over one-liners/complex ternaries
+  - Include appropriate error handling if completing functions/methods
+  - Only add imports if absolutely necessary for the completion
+  
+  # IMPORTANT: Response Format
+  - Return ONLY the code
+  - No explanations, comments, or additional text
+  - No markdown code blocks or formatting
+  - Just the raw code that should replace or complete the current position
+  
+  You must respond with valid JSON in the following format:
+  {
+    "lineStart": number,
+    "lineEnd": number, 
+    "filePath": "string",
+    "content": "string"
+  }`
 }
