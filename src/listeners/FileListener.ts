@@ -19,6 +19,12 @@ export default class FileListener {
   private debounceTimer: ReturnType<typeof setTimeout> | undefined
   /** Debounce delay in milliseconds */
   private readonly debounceDelay: number = 300
+  /** Activity timer for auto-deactivation */
+  private activityTimer: ReturnType<typeof setTimeout> | undefined
+  /** Activity timeout in milliseconds (10 seconds) */
+  private readonly activityTimeout: number = 10000
+  /** Whether the listener is currently active */
+  private isListenerActive: boolean = false
 
   /**
    * Initializes a new FileListener instance
@@ -44,14 +50,18 @@ export default class FileListener {
       )
       const activeEditorListener: vscode.Disposable = vscode.window.onDidChangeActiveTextEditor(
         (editor: vscode.TextEditor | undefined) => {
-          if (editor !== undefined && this.shouldCaptureContext()) {
-            this.captureFileContext(editor)
+          if (editor !== undefined) {
+            this.resetActivityTimer()
+            if (this.isListenerActive && this.shouldCaptureContext()) {
+              this.captureFileContext(editor)
+            }
           }
         }
       )
       const selectionListener: vscode.Disposable = vscode.window.onDidChangeTextEditorSelection(
         (event: vscode.TextEditorSelectionChangeEvent) => {
-          if (this.shouldCaptureContext()) {
+          this.resetActivityTimer()
+          if (this.isListenerActive && this.shouldCaptureContext()) {
             this.captureFileContext(event.textEditor)
           }
         }
@@ -60,12 +70,11 @@ export default class FileListener {
         (event: vscode.TextDocumentChangeEvent) => {
           const { document }: { document: vscode.TextDocument } = event
           const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
-          if (
-            activeEditor !== undefined &&
-            activeEditor.document === document &&
-            this.shouldCaptureContext()
-          ) {
-            this.captureFileContext(activeEditor)
+          if (activeEditor !== undefined && activeEditor.document === document) {
+            this.handleTypingActivity()
+            if (this.isListenerActive && this.shouldCaptureContext()) {
+              this.captureFileContext(activeEditor)
+            }
           }
         }
       )
@@ -90,6 +99,11 @@ export default class FileListener {
         clearTimeout(this.debounceTimer)
         this.debounceTimer = undefined
       }
+      if (this.activityTimer !== undefined) {
+        clearTimeout(this.activityTimer)
+        this.activityTimer = undefined
+      }
+      this.isListenerActive = false
       await vscode.commands.executeCommand(
         'setContext',
         `${configSection}.FileListenerActive`,
@@ -110,11 +124,50 @@ export default class FileListener {
   }
 
   /**
-   * Retrieves the service instance
-   * @returns The OllamaService instance used by this listener
+   * Activates the listener and starts activity monitoring
+   * @description Enables context capture and starts the activity timer
    */
-  public getService(): OllamaService {
-    return this.ollamaService
+  private activateListener(): void {
+    if (!this.isListenerActive) {
+      this.isListenerActive = true
+      this.resetActivityTimer()
+    }
+  }
+
+  /**
+   * Deactivates the listener and stops activity monitoring
+   * @description Disables context capture and clears the activity timer
+   */
+  private deactivateListener(): void {
+    if (this.isListenerActive) {
+      this.isListenerActive = false
+      if (this.activityTimer !== undefined) {
+        clearTimeout(this.activityTimer)
+        this.activityTimer = undefined
+      }
+    }
+  }
+
+  /**
+   * Resets the activity timer to prevent auto-deactivation
+   * @description Clears existing timer and starts a new 10-second countdown
+   */
+  private resetActivityTimer(): void {
+    if (this.activityTimer !== undefined) {
+      clearTimeout(this.activityTimer)
+    }
+    this.activityTimer = setTimeout(() => {
+      this.deactivateListener()
+    }, this.activityTimeout)
+  }
+
+  /**
+   * Handles typing activity and activates listener
+   * @description Activates listener only on typing (document changes)
+   */
+  private handleTypingActivity(): void {
+    this.activateListener()
+    this.resetActivityTimer()
   }
 
   /**

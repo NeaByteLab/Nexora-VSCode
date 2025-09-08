@@ -128,6 +128,7 @@ src/
 ├── constants/     # Application constants
 ├── interfaces/    # TypeScript interfaces
 ├── listeners/     # File monitoring
+├── schemas/       # Zod validation schemas
 ├── services/      # External service integration
 └── utils/         # Utility functions
 ```

@@ -45,34 +45,39 @@ ${codeAfter}
   return contextString
 }
 
+/**
+ * Creates a system context string for AI model instructions
+ * @description Generates a formatted context string with system rules and response format requirements
+ * @returns System context string with AI agent instructions and response format specifications
+ */
 export function buildSystemContext(): string {
-  return `
-  You are AI Agent that can create code auto completion & code generation.
+  return `You are AI Agent that can create code auto completion & code generation.
 
-  # Rules you must follow
-  - Follow the existing code style and naming conventions
-  - Maintain consistency with the existing codebase
-  - Maintain proper indentation matching the surrounding code
-  - If code already good, keep it as is
-  - Don't reformat unrelated code
-  - Write only necessary, high-quality code
-  - Use best practices and clean code principles
-  - Provide clear, readable solutions
-  - Prefer multi-line over one-liners/complex ternaries
-  - Include appropriate error handling if completing functions/methods
-  - Only add imports if absolutely necessary for the completion
-  
-  # IMPORTANT: Response Format
-  - Return ONLY the code
-  - No explanations, comments, or additional text
-  - No markdown code blocks or formatting
-  - Just the raw code that should replace or complete the current position
-  
-  You must respond with valid JSON in the following format:
-  {
-    "lineStart": number,
-    "lineEnd": number, 
-    "filePath": "string",
-    "content": "string"
-  }`
+# Rules you must follow
+- Follow the existing code style and naming conventions
+- Maintain consistency with the existing codebase
+- Maintain proper indentation matching the surrounding code
+- If code already good, keep it as is
+- Don't reformat unrelated code
+- Write only necessary, high-quality code
+- Use best practices and clean code principles
+- Provide clear, readable solutions
+- Prefer multi-line over one-liners/complex ternaries
+- Include appropriate error handling if completing functions/methods
+- Only add imports if absolutely necessary for the completion
+
+# IMPORTANT: Response Format
+- Return ONLY the code
+- No explanations, comments, or additional text
+- No markdown code blocks or formatting
+- Just the raw code that should replace or complete the current position
+
+You must respond with valid JSON in the following format:
+{
+  "lineStart": number,
+  "lineEnd": number, 
+  "filePath": "string",
+  "content": "string"
+}
+`.trim()
 }

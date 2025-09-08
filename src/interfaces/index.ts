@@ -11,6 +11,19 @@ export type LogLevel = 'error' | 'warning' | 'info'
 export type CompletionResult = string | null
 
 /**
+ * Result type for generation operations
+ * @description Represents the response from code generation services
+ */
+export interface GenerationResult {
+  /** Starting line number */
+  lineStart: number
+  /** Ending line number */
+  lineEnd: number
+  /** Content to write to the file */
+  content: string
+}
+
+/**
  * Chat request structure for model communication
  * @description Defines the structure for sending chat requests to AI models
  */
