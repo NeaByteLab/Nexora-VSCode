@@ -39,3 +39,34 @@ export interface ConfigurationData {
   /** Selected model */
   selectedModel: string
 }
+
+/**
+ * File context data structure
+ * Contains information about the active file and cursor position
+ */
+export interface FileContextData {
+  /** Full file path */
+  filePath: string
+  /** File name with extension */
+  fileName: string
+  /** File name without extension */
+  fileNameWithoutExt: string
+  /** File extension */
+  fileExtension: string
+  /** Language ID (typescript, javascript, etc.) */
+  languageId: string
+  /** Current line number (1-based) */
+  lineNumber: number
+  /** Current character position (1-based) */
+  characterPosition: number
+  /** Current line text */
+  currentLineText: string
+  /** Text before cursor */
+  textBeforeCursor: string
+  /** Text after cursor */
+  textAfterCursor: string
+  /** Total lines in file */
+  totalLines: number
+  /** Is file saved */
+  isDirty: boolean
+}

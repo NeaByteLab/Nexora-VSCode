@@ -12,6 +12,7 @@
       "@config/*": ["src/config/*"],
       "@constants/*": ["src/constants/*"],
       "@interfaces/*": ["src/interfaces/*"],
+      "@listeners/*": ["src/listeners/*"],
       "@services/*": ["src/services/*"],
       "@utils/*": ["src/utils/*"]
     },
