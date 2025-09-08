@@ -98,8 +98,8 @@ Configure through VSCode settings:
 ```json
 {
   "Nexora-AI.UrlHost": "http://localhost:11434",
-  "Nexora-AI.DatabasePath": "/path/to/your/nexora.db",
-  "Nexora-AI.SelectedModel": "llama2"
+  "Nexora-AI.DatabasePath": "~/nexora.db",
+  "Nexora-AI.SelectedModel": ""
 }
 ```
 
@@ -114,41 +114,22 @@ Access through command palette (`Ctrl+Shift+P`):
 
 ---
 
-## 🎯 Usage
-
-### 🖱️ Context Menu
-Right-click in editor or explorer:
-- **Nexora AI** submenu with all commands
-
-### 📁 File Monitoring
-Extension automatically:
-- **Monitors** active file and cursor position
-- **Captures** code context and diagnostics
-- **Provides** information to AI models
-- **Logs** context information to debug console
-
-### 👀 Context Monitoring
-- **Select model** using model selection command
-- **Configure database** for account management (if using remote services)
-- **Test connectivity** to verify setup
-- **Start coding** - extension captures context automatically
-- **View context** - Check debug console for captured context data
-
----
-
 ## 🔧 Development
 
 ### 📁 Project Structure
 ```
 src/
-├── cmd/           # Command implementations
-├── config/        # Configuration management
-├── constants/     # Application constants
-├── interfaces/    # TypeScript interfaces
-├── listeners/     # File monitoring
-├── schemas/       # Zod validation schemas
-├── services/      # External service integration
-└── utils/         # Utility functions
+├── cmd/                    # Command implementations
+├── config/                 # Configuration management
+├── constants/              # Application constants
+├── integrator/             # Core integration modules
+│   ├── context/            # Context building and data processing
+│   ├── utils/              # Caching and utility functions
+│   └── vscode/             # VS Code specific integrations
+├── interfaces/             # TypeScript interfaces
+├── schemas/                # Zod validation schemas
+├── services/               # External service integration
+└── utils/                  # Utility functions
 ```
 
 ### 🏗️ Building
