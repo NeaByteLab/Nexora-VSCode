@@ -28,18 +28,23 @@ VSCode extension foundation for AI code assistance. Monitors file changes and ca
 
 ### ✅ Completed
 - [x] **AI service integration** - Ollama connection and model selection
-- [x] **Context capture** - File monitoring and cursor position tracking
-- [x] **Configuration management** - Settings and database path selection
 - [x] **Command system** - Right-click menus and command palette integration
+- [x] **Configuration management** - Settings and database path selection
+- [x] **Context capture** - File monitoring and cursor position tracking
+- [x] **Diagnostics integration** - VSCode error and warning detection
+- [x] **Performance optimization** - Smart activity detection and debounced processing
 
 ### 🚧 In Progress
 - [ ] **Auto completion provider** - VSCode completion item provider implementation
+- [ ] **Suggestion review UI** - Accept, reject, or modify AI code suggestions
 
 ### 📋 Planned
 - [ ] **Intelligent suggestions** - Context-aware code recommendations
 - [ ] **Multi-language support** - Enhanced language detection and processing
-- [ ] **Performance optimization** - Faster context capture and AI responses
-- [ ] **Advanced diagnostics** - Error analysis and code quality insights
+- [ ] **Multi-line edits** - AI suggests multiple code changes simultaneously
+- [ ] **Predictive autocomplete** - Autocomplete that predicts next edit
+- [ ] **Smart context-aware suggestions** - Workspace activity-based completions
+- [ ] **Tab navigation** - Use TAB shortcut to jump through AI edits
 
 ---
 
