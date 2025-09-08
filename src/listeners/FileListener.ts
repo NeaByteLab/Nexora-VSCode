@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { FileContextData } from '@interfaces/index'
+import { BuildContext } from '@listeners/index'
 import { OllamaService } from '@services/index'
 import { ErrorHandler } from '@utils/index'
 import { configSection } from '@constants/index'
@@ -13,13 +14,21 @@ import { configSection } from '@constants/index'
 export default class FileListener {
   /** Service instance for handling operations */
   private readonly ollamaService: OllamaService
+  /** Extension context for managing subscriptions */
+  private readonly context: vscode.ExtensionContext
+  /** Debounce timer for file context handling */
+  private debounceTimer: ReturnType<typeof setTimeout> | undefined
+  /** Debounce delay in milliseconds */
+  private readonly debounceDelay: number = 300
 
   /**
    * Creates a new FileListener instance.
    * @param ollamaService - Service instance for handling operations
+   * @param context - Extension context for managing subscriptions
    */
-  constructor(ollamaService: OllamaService) {
+  constructor(ollamaService: OllamaService, context: vscode.ExtensionContext) {
     this.ollamaService = ollamaService
+    this.context = context
   }
 
   /**
@@ -35,29 +44,34 @@ export default class FileListener {
         `${configSection}.FileListenerActive`,
         true
       )
-      vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor | undefined) => {
-        if (editor !== undefined && this.shouldCaptureContext()) {
-          this.captureFileContext(editor)
+      const activeEditorListener: vscode.Disposable = vscode.window.onDidChangeActiveTextEditor(
+        (editor: vscode.TextEditor | undefined) => {
+          if (editor !== undefined && this.shouldCaptureContext()) {
+            this.captureFileContext(editor)
+          }
         }
-      })
-      vscode.window.onDidChangeTextEditorSelection(
+      )
+      const selectionListener: vscode.Disposable = vscode.window.onDidChangeTextEditorSelection(
         (event: vscode.TextEditorSelectionChangeEvent) => {
           if (this.shouldCaptureContext()) {
             this.captureFileContext(event.textEditor)
           }
         }
       )
-      vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
-        const { document }: { document: vscode.TextDocument } = event
-        const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
-        if (
-          activeEditor !== undefined &&
-          activeEditor.document === document &&
-          this.shouldCaptureContext()
-        ) {
-          this.captureFileContext(activeEditor)
+      const documentListener: vscode.Disposable = vscode.workspace.onDidChangeTextDocument(
+        (event: vscode.TextDocumentChangeEvent) => {
+          const { document }: { document: vscode.TextDocument } = event
+          const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
+          if (
+            activeEditor !== undefined &&
+            activeEditor.document === document &&
+            this.shouldCaptureContext()
+          ) {
+            this.captureFileContext(activeEditor)
+          }
         }
-      })
+      )
+      this.context.subscriptions.push(activeEditorListener, selectionListener, documentListener)
       const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
       if (activeEditor !== undefined && this.shouldCaptureContext()) {
         this.captureFileContext(activeEditor)
@@ -74,6 +88,12 @@ export default class FileListener {
    */
   public async stop(): Promise<void> {
     try {
+      // Clear debounce timer if it exists
+      if (this.debounceTimer !== undefined) {
+        clearTimeout(this.debounceTimer)
+        this.debounceTimer = undefined
+      }
+
       await vscode.commands.executeCommand(
         'setContext',
         `${configSection}.FileListenerActive`,
@@ -177,59 +197,45 @@ export default class FileListener {
     warningCount: number
   ): void {
     try {
-      const formattedDiagnostics: string = diagnostics
-        .map((d: vscode.Diagnostic) => {
-          const line: number = d.range.start.line + 1
-          const col: number = d.range.start.character + 1
-          const source: string = d.source !== undefined ? `${d.source}` : ''
-          let rules: string = ''
-          if (d.code !== undefined) {
-            if (typeof d.code === 'string' || typeof d.code === 'number') {
-              rules = `${d.code}`
-            } else if (typeof d.code === 'object' && 'value' in d.code) {
-              rules = `${d.code.value}`
+      if (this.debounceTimer !== undefined) {
+        clearTimeout(this.debounceTimer)
+      }
+      this.debounceTimer = setTimeout(() => {
+        const diagnosticsList: string = diagnostics
+          .map((d: vscode.Diagnostic) => {
+            const line: number = d.range.start.line + 1
+            const col: number = d.range.start.character + 1
+            const source: string = d.source !== undefined ? `${d.source}` : ''
+            let rules: string = ''
+            if (d.code !== undefined) {
+              if (typeof d.code === 'string' || typeof d.code === 'number') {
+                rules = `${d.code}`
+              } else if (typeof d.code === 'object' && 'value' in d.code) {
+                rules = `${d.code.value}`
+              }
             }
-          }
-          return `- ${d.message} ${source}(${rules}) [Ln: ${line}, Col: ${col}]`
-        })
-        .join('\n')
-      const linesBefore: string[] = context.textBeforeCursor.split('\n')
-      const codeBefore: string = linesBefore.slice(Math.max(0, linesBefore.length - 30)).join('\n')
-      const linesAfter: string[] = context.textAfterCursor.split('\n')
-      const codeAfter: string = linesAfter.slice(0, Math.min(30, linesAfter.length)).join('\n')
-      const logMessage: string = `
-You are AI Agent that can create code auto completion & code generation.
-
-# Rules you must follow
-- Follow the existing code style and naming conventions
-- Use best practices and clean code principles
-- Write only necessary, high-quality code
-- Maintain consistency with the existing codebase
-- Provide clear, readable solutions
-
-# Trigger context
-- File: ${context.fileName} (${context.languageId})
-- Path: ${context.filePath}
-- Position: Line ${context.lineNumber}, Char ${context.characterPosition}
-- Current Line: "${context.currentLineText}"
-- Total Lines: ${context.totalLines}
-- Is Dirty: ${context.isDirty}
-- Errors: ${errorCount}, Warnings: ${warningCount}
-
-# Diagnostics
-${formattedDiagnostics || 'No diagnostics found'}
-
-# Code before cursor (30 lines before current line)
-\`\`\`${context.languageId}
-${codeBefore}
-\`\`\`
-
-# Code after cursor (30 lines after current line)
-\`\`\`${context.languageId}
-${codeAfter}
-\`\`\`
-`.trim()
-      console.log(logMessage)
+            return `- ${d.message} ${source}(${rules}) [Ln: ${line}, Col: ${col}]`
+          })
+          .join('\n')
+        const linesBefore: string[] = context.textBeforeCursor.split('\n')
+        const codeBefore: string = linesBefore
+          .slice(Math.max(0, linesBefore.length - 30))
+          .join('\n')
+        const linesAfter: string[] = context.textAfterCursor.split('\n')
+        const codeAfter: string = linesAfter.slice(0, Math.min(30, linesAfter.length)).join('\n')
+        const contextString: string = (
+          BuildContext as (
+            context: FileContextData,
+            errorCount: number,
+            warningCount: number,
+            diagnosticsList: string,
+            codeBefore: string,
+            codeAfter: string
+          ) => string
+        )(context, errorCount, warningCount, diagnosticsList, codeBefore, codeAfter)
+        console.log(contextString)
+        this.debounceTimer = undefined
+      }, this.debounceDelay)
     } catch (error: unknown) {
       ErrorHandler.handle(error, 'log file context', true, 'error')
     }

@@ -20,7 +20,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   /** Initialize Ollama service */
   ollamaService = new OllamaService()
   /** Initialize file listener - creates side effects (event listeners) */
-  fileListener = new FileListener(ollamaService)
+  fileListener = new FileListener(ollamaService, context)
   await fileListener.start()
   /** Register open config command */
   const openConfigCommand: vscode.Disposable = vscode.commands.registerCommand(
