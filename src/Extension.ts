@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
-import { CheckConfig, SelectModel, TestService } from '@cmd/index'
-import FileListener from './listeners/FileListener'
+import { CheckConfig, SelectModel, SelectDatabase, TestService } from '@cmd/index'
+import { FileListener } from '@listeners/index'
 import { OllamaService } from '@services/index'
 import { configSection, vscodeSettingsCommand, vscodeSettingsFilter } from '@constants/index'
 
@@ -43,6 +43,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       await SelectModel(ollamaService)
     }
   )
+  /** Register select database command */
+  const selectDatabaseCommand: vscode.Disposable = vscode.commands.registerCommand(
+    `${configSection}.SelectDatabase`,
+    async (): Promise<void> => {
+      await SelectDatabase()
+    }
+  )
   /** Register test service command */
   const testServiceCommand: vscode.Disposable = vscode.commands.registerCommand(
     `${configSection}.TestService`,
@@ -55,6 +62,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     openConfigCommand,
     checkConfigCommand,
     selectModelCommand,
+    selectDatabaseCommand,
     testServiceCommand
   )
 }
