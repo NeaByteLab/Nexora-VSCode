@@ -4,6 +4,7 @@
   "description": "AI Inline Code Completion",
   "version": "0.0.1",
   "publisher": "nexora",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.103.0"
   },
