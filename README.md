@@ -32,24 +32,32 @@ VSCode extension foundation for AI code assistance. Monitors file changes and ca
 - [x] **Configuration management** - Settings and database path selection
 - [x] **Context capture** - File monitoring and cursor position tracking
 - [x] **Diagnostics integration** - VSCode error and warning detection
-- [x] **Performance optimization** - Smart activity detection and debounced processing
-
-### 📋 Partially Implemented
-- [x] **Auto completion provider** - VSCode completion item provider implementation
-- [x] **Suggestion review UI** - Accept, reject, or modify AI code suggestions
-- [x] **Intelligent suggestions** - Context-aware code recommendations
-- [x] **Multi-line edits** - AI suggests multiple code changes simultaneously
-- [x] **Quick diff functionality** - Visual comparison of AI suggestions
-
-> **⚠️ Note:** These features are implemented but have known bugs. AI successfully generates code suggestions, but they may not display properly in the editor or behave buggy. Quick diff functionality also has display issues that need to be resolved.
-
-### 🚧 In Progress
-- [ ] **Smart context-aware suggestions** - Workspace activity-based completions
 
 ### 📋 Planned
-- [ ] **Multi-language support** - Enhanced language detection and processing
+
+#### 🚀 Core Completion Features
+- [ ] **Auto completion provider** - VSCode completion item provider implementation
+- [ ] **Inline suggestions display** - Ghost text showing AI suggestions
+- [ ] **Intelligent suggestions** - Context-aware code recommendations
+- [ ] **Multi-line edits** - AI suggests multiple code changes simultaneously
+
+#### 🎯 User Interface & Interaction
+- [ ] **Suggestion review UI** - Accept, reject, or modify AI code suggestions
+- [ ] **Accept/Reject shortcuts** - Tab to accept, Esc to reject suggestions
+- [ ] **Suggestion cycling** - Navigate through multiple suggestions (Ctrl+→)
+- [ ] **Visual diff preview** - Show what will change before applying
+- [ ] **Quick diff functionality** - Visual comparison of AI suggestions
+
+#### 🔮 Predictive & Smart Features
 - [ ] **Predictive autocomplete** - Autocomplete that predicts next edit
-- [ ] **Tab navigation** - Use TAB shortcut to jump through AI edits
+  - [ ] **Tab navigation** - Use TAB shortcut to jump through AI edits
+- [ ] **Smart context-aware suggestions** - Workspace activity-based completions
+- [ ] **Comment-to-code generation** - Generate code from comments
+- [ ] **Test generation** - Generate tests from existing code
+
+#### 🌐 Language & Performance
+- [ ] **Multi-language support** - Enhanced language detection and processing
+- [ ] **Performance optimization** - Smart activity detection and debounced processing
 
 ---
 

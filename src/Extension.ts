@@ -1,13 +1,13 @@
 import * as vscode from 'vscode'
-import { CheckConfig, SelectModel, SelectDatabase, TestService } from '@cmd/index'
-import { FileListener } from '@listeners/index'
+import activatedEventCommand from '@eventCommand'
+import { updateConfigCache, ConfigManager } from '@config/index'
+import { InlineCompletion } from '@integrator/index'
 import { OllamaService } from '@services/index'
-import { configSection, vscodeSettingsCommand, vscodeSettingsFilter } from '@constants/index'
 
 /** Service instance for handling code generation operations */
 let ollamaService: OllamaService
-/** Service instance for monitoring file changes and cursor position */
-let fileListener: FileListener
+/** Service instance for managing inline completion providers */
+let inlineCompletion: InlineCompletion
 
 /**
  * Initializes the extension when activated
@@ -15,54 +15,18 @@ let fileListener: FileListener
  * @param context - Extension context for managing subscriptions and lifecycle
  */
 export function activate(context: vscode.ExtensionContext): void {
+  /** Initialize config cache */
+  updateConfigCache()
+  ConfigManager.onDidChangeConfiguration(() => {
+    updateConfigCache()
+  })
   /** Initialize Ollama service for code generation */
   ollamaService = new OllamaService()
-  /** Initialize file listener for monitoring editor changes */
-  fileListener = new FileListener(ollamaService, context)
-  fileListener.start()
-  /** Register open config command */
-  const openConfigCommand: vscode.Disposable = vscode.commands.registerCommand(
-    `${configSection}.OpenConfig`,
-    (): void => {
-      vscode.commands.executeCommand(vscodeSettingsCommand, vscodeSettingsFilter)
-    }
-  )
-  /** Register check config command */
-  const checkConfigCommand: vscode.Disposable = vscode.commands.registerCommand(
-    `${configSection}.CheckConfig`,
-    async (): Promise<void> => {
-      await CheckConfig(ollamaService)
-    }
-  )
-  /** Register select model command */
-  const selectModelCommand: vscode.Disposable = vscode.commands.registerCommand(
-    `${configSection}.SelectModel`,
-    async (): Promise<void> => {
-      await SelectModel(ollamaService)
-    }
-  )
-  /** Register select database command */
-  const selectDatabaseCommand: vscode.Disposable = vscode.commands.registerCommand(
-    `${configSection}.SelectDatabase`,
-    async (): Promise<void> => {
-      await SelectDatabase()
-    }
-  )
-  /** Register test service command */
-  const testServiceCommand: vscode.Disposable = vscode.commands.registerCommand(
-    `${configSection}.TestService`,
-    async (): Promise<void> => {
-      await TestService(ollamaService)
-    }
-  )
-  /** Register commands */
-  context.subscriptions.push(
-    openConfigCommand,
-    checkConfigCommand,
-    selectModelCommand,
-    selectDatabaseCommand,
-    testServiceCommand
-  )
+  /** Initialize completion API for inline suggestions */
+  inlineCompletion = new InlineCompletion(ollamaService, context)
+  inlineCompletion.start()
+  /** Activate command */
+  activatedEventCommand(context, ollamaService)
 }
 
 /**
@@ -70,5 +34,5 @@ export function activate(context: vscode.ExtensionContext): void {
  * @description Called when the editor shuts down or extension is disabled
  */
 export function deactivate(): void {
-  fileListener.stop()
+  return undefined
 }

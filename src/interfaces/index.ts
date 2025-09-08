@@ -15,13 +15,17 @@ export type CompletionResult = string | null
  * @description Represents the response from code generation services
  */
 export interface GenerationResult {
-  /** Starting line number */
+  /** Starting line number for code insertion (1-based) */
   lineStart: number
-  /** Ending line number */
+  /** Starting character position for code insertion (0-based) */
+  charStart: number
+  /** Ending line number for code replacement (1-based) */
   lineEnd: number
-  /** Content to write to the file */
+  /** Ending character position for code replacement (0-based) */
+  charEnd: number
+  /** Generated code content to insert */
   content: string
-  /** Title of the code suggestion and completion */
+  /** Descriptive title of the code suggestion */
   title: string
 }
 
@@ -30,19 +34,19 @@ export interface GenerationResult {
  * @description Defines the structure for sending chat requests to AI models
  */
 export interface ChatRequest {
-  /** Model identifier */
+  /** Name of the model to use for generation */
   model: string
-  /** Array of conversation messages */
+  /** Array of conversation messages with role and content */
   messages: Array<{ role: string; content: string }>
-  /** Generation options */
+  /** Generation parameters and options */
   options: { temperature: number }
-  /** Keep alive duration */
+  /** Duration to keep the model loaded in memory */
   keep_alive: string
-  /** Thinking mode setting */
+  /** Thinking mode configuration for the model */
   think: boolean | 'low' | 'medium' | 'high'
-  /** Stream response flag */
+  /** Whether to stream the response or return complete response */
   stream: boolean
-  /** Optional output format specification */
+  /** Optional output format specification for structured responses */
   format?: object
 }
 
@@ -51,15 +55,15 @@ export interface ChatRequest {
  * @description Contains user credentials and API usage limits
  */
 export interface AccountData {
-  /** User email address */
+  /** User email address for account identification */
   email: string
-  /** User password */
+  /** User password for authentication */
   password: string
-  /** API key for authentication */
+  /** API key for service authentication */
   api_key: string
-  /** Hourly request limit (null if unlimited) */
+  /** Maximum requests per hour (null indicates no limit) */
   limit_hourly: number | null
-  /** Daily request limit (null if unlimited) */
+  /** Maximum requests per day (null indicates no limit) */
   limit_daily: number | null
 }
 
@@ -68,41 +72,69 @@ export interface AccountData {
  * @description Contains application configuration settings
  */
 export interface ConfigurationData {
-  /** Host URL */
+  /** Service host URL for API communication */
   host: string
-  /** Database path */
+  /** File path to the SQLite database */
   databasePath: string
-  /** Selected model */
+  /** Name of the currently selected model */
   selectedModel: string
 }
 
 /**
- * File context data structure
- * @description Contains information about the active file and cursor position
+ * File context data structure for document analysis
+ * @description Contains file metadata and cursor position information
  */
 export interface FileContextData {
-  /** Full file path */
-  filePath: string
-  /** File name with extension */
-  fileName: string
-  /** File name without extension */
-  fileNameWithoutExt: string
-  /** File extension */
-  fileExtension: string
-  /** Language ID (typescript, javascript, etc.) */
-  languageId: string
-  /** Current line number (1-based) */
-  lineNumber: number
-  /** Current character position (1-based) */
-  characterPosition: number
-  /** Current line text */
-  currentLineText: string
-  /** Text before cursor */
-  textBeforeCursor: string
-  /** Text after cursor */
-  textAfterCursor: string
-  /** Total lines in file */
-  totalLines: number
-  /** Is file saved */
-  isDirty: boolean
+  /** File metadata and properties */
+  fileData: {
+    /** Complete absolute file path */
+    filePath: string
+    /** File name including extension */
+    fileName: string
+    /** File name without extension */
+    fileNameWithoutExt: string
+    /** File extension without the dot */
+    fileExtension: string
+    /** Language identifier used by the editor */
+    fileLanguageId: string
+    /** Total number of lines in the document */
+    fileTotalLines: number
+    /** Whether the file has unsaved changes */
+    fileIsDirty: boolean
+  }
+  /** Cursor position and text selection data */
+  selectedData: {
+    /** Text content of the line where cursor is positioned */
+    selectedLineText: string
+    /** Line number where cursor is positioned (1-based) */
+    selectedLineNumber: number
+    /** Character position within the current line (1-based) */
+    selectedCharacterPosition: number
+    /** All text content before the cursor position */
+    selectedTextBeforeCursor: string
+    /** All text content after the cursor position */
+    selectedTextAfterCursor: string
+  }
+  /** Optional diagnostic information */
+  diagnosticData?: {
+    /** Formatted list of diagnostic problems */
+    problemList: string
+    /** Number of error problems found */
+    problemErrCount: number
+    /** Number of warning problems found */
+    problemWarningCount: number
+  }
+}
+
+/**
+ * Diagnostic context data structure for error analysis
+ * @description Contains diagnostic information from code analysis
+ */
+export interface DiagnosticContextData {
+  /** Formatted list of diagnostic problems */
+  problemList: string
+  /** Number of error problems found */
+  problemErrCount: number
+  /** Number of warning problems found */
+  problemWarningCount: number
 }

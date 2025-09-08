@@ -1,12 +1,12 @@
 import { Ollama, ChatResponse } from 'ollama'
 import { ChatRequest, AccountData, CompletionResult } from '@interfaces/index'
-import { buildSystemContext } from '@listeners/BuildContext'
+import { ContextBuilder } from '@integrator/index'
 import { KnexManager, ConfigManager } from '@config/index'
 import { ErrorHandler, Validator } from '@utils/index'
 
 /**
  * Service for AI model communication
- * Handles interactions with local or remote model services
+ * @description Handles interactions with local or remote model services for code generation and completion
  */
 export default class OllamaService {
   /** Error message for connection issues */
@@ -47,6 +47,7 @@ export default class OllamaService {
 
   /**
    * Processes service errors and provides user-friendly messages
+   * @description Handles different types of connection and timeout errors with appropriate user feedback
    * @param error - The error object to process
    */
   private handleError(error: unknown): void {
@@ -75,6 +76,7 @@ export default class OllamaService {
 
   /**
    * Retrieves available models from the service
+   * @description Fetches the list of available models from the configured service endpoint
    * @returns Promise that resolves to an array of model names
    */
   public async getModels(): Promise<string[]> {
@@ -89,6 +91,7 @@ export default class OllamaService {
 
   /**
    * Generates text completion using the model service
+   * @description Sends a prompt to the model and returns the generated response
    * @param prompt - Text input to send to the model
    * @param format - Optional format specification for structured output
    * @returns Promise that resolves to the generated response or structured data
@@ -100,7 +103,7 @@ export default class OllamaService {
     try {
       this.ollama = await this.getInstance()
       const chatMessages: Array<{ role: string; content: string }> = []
-      const systemContext: string = (buildSystemContext as () => string)()
+      const systemContext: string = ContextBuilder.getSystemPrompt()
       if (format) {
         chatMessages.push({ role: 'system', content: systemContext })
       }
@@ -114,7 +117,7 @@ export default class OllamaService {
         keep_alive: '5m',
         think: false,
         stream: false,
-        ...format ? { format } : {}
+        ...(format ? { format } : {})
       }
       const data: ChatResponse = await this.ollama.chat({ ...chatRequest, stream: false })
       return format ? data : data.message.content

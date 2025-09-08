@@ -1,7 +1,9 @@
 import * as vscode from 'vscode'
-import { ConfigManager } from '@config/index'
+import { ConfigManager, isConfigChanged } from '@config/index'
+import { CacheManager } from '@integrator/index'
 import { OllamaService } from '@services/index'
 import { ErrorHandler } from '@utils/index'
+import { configSection } from '@constants/index'
 
 /**
  * Global state variables
@@ -17,7 +19,20 @@ let listModels: string[] = []
  */
 export default async function (ollamaService: OllamaService): Promise<void> {
   try {
-    listModels = await ollamaService.getModels()
+    if (isConfigChanged()) {
+      listModels = await ollamaService.getModels()
+      CacheManager.set(`${configSection}.OllamaModel`, listModels)
+    } else {
+      const cachedModels: string[] | undefined = CacheManager.get(
+        `${configSection}.OllamaModel`
+      ) as string[] | undefined
+      if (cachedModels && cachedModels.length > 0) {
+        listModels = cachedModels
+      } else {
+        listModels = await ollamaService.getModels()
+        CacheManager.set(`${configSection}.OllamaModel`, listModels)
+      }
+    }
     selectedModel = ConfigManager.getSelectedModel()
     if (
       (!selectedModel || !listModels.includes(selectedModel)) &&
@@ -28,6 +43,7 @@ export default async function (ollamaService: OllamaService): Promise<void> {
       const firstModel: string = listModels[0]
       await ConfigManager.setSelectedModel(firstModel)
       selectedModel = ConfigManager.getSelectedModel()
+      CacheManager.set(`${configSection}.OllamaModel`, listModels)
     }
     const quickPick: vscode.QuickPickItem[] = listModels.map((model: string) => {
       if (model === selectedModel) {

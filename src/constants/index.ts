@@ -47,3 +47,46 @@ export const vscodeSettingsFilter: string = configSection
  * Text displayed on settings button in notifications
  */
 export const vscodeSettingsButton: string = 'Open Settings'
+
+/**
+ * Whitelist of file extensions for inline completion
+ */
+export const vscodeWhitelistExt: string[] = [
+  'c',
+  'cs',
+  'cpp',
+  'clj',
+  'css',
+  'dart',
+  'dockerfile',
+  'ex',
+  'el',
+  'go',
+  'hs',
+  'html',
+  'java',
+  'js',
+  'jl',
+  'ipynb',
+  'kt',
+  'lua',
+  'm',
+  'mm',
+  'pl',
+  'php',
+  'ps1',
+  'py',
+  'r',
+  'rb',
+  'rs',
+  'scala',
+  'sh',
+  'swift',
+  'tex',
+  'ts',
+  'vue',
+  'jsx',
+  'tsx',
+  'md',
+  'txt'
+]

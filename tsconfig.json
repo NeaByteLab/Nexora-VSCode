@@ -11,11 +11,12 @@
       "@cmd/*": ["src/cmd/*"],
       "@config/*": ["src/config/*"],
       "@constants/*": ["src/constants/*"],
+      "@integrator/*": ["src/integrator/*"],
       "@interfaces/*": ["src/interfaces/*"],
-      "@listeners/*": ["src/listeners/*"],
       "@services/*": ["src/services/*"],
       "@schemas/*": ["src/schemas/*"],
-      "@utils/*": ["src/utils/*"]
+      "@utils/*": ["src/utils/*"],
+      "@eventCommand": ["src/Command"]
     },
     "tsBuildInfoFile": ".tsbuildinfo",
     "importsNotUsedAsValues": "remove",

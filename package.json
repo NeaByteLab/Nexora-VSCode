@@ -5,6 +5,14 @@
   "version": "0.0.1",
   "publisher": "nexora",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NeaByteLab/Nexora-VSCode.git"
+  },
+  "homepage": "https://github.com/NeaByteLab/Nexora-VSCode",
+  "bugs": {
+    "url": "https://github.com/NeaByteLab/Nexora-VSCode/issues"
+  },
   "engines": {
     "vscode": "^1.103.0"
   },
@@ -23,17 +31,12 @@
     "keybindings": [
       {
         "command": "Nexora-AI.AcceptSuggestion",
-        "key": "ctrl+shift+a",
+        "key": "cmd+shift+a",
         "when": "editorTextFocus"
       },
       {
         "command": "Nexora-AI.RejectSuggestion",
-        "key": "ctrl+shift+r",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "Nexora-AI.ShowDiff",
-        "key": "ctrl+shift+d",
+        "key": "cmd+shift+r",
         "when": "editorTextFocus"
       }
     ],
