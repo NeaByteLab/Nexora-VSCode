@@ -26,8 +26,8 @@ export default class KeyboardBinding {
   public setup(): void {
     const acceptCtrlCommand: vscode.Disposable = vscode.commands.registerCommand(
       `${configSection}.AcceptSuggestion`,
-      () => {
-        this.acceptSuggestion()
+      (docUri: vscode.Uri, docRange: vscode.Range) => {
+        this.acceptSuggestion(docUri, docRange)
       }
     )
     const rejectCtrlCommand: vscode.Disposable = vscode.commands.registerCommand(
@@ -43,23 +43,12 @@ export default class KeyboardBinding {
    * Accepts the current suggestion and applies it to the editor
    * @description Commits the active suggestion to the document
    */
-  public acceptSuggestion(): void {
+  public acceptSuggestion(docUri: vscode.Uri, docRange: vscode.Range): void {
     const ollamaContent: GenerationResult | null = CacheManager.get(
       'CompletionAccept'
     ) as GenerationResult | null
     if (ollamaContent) {
-      CacheManager.set('CompletionAccept', null)
-      const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
-      if (!activeEditor) {
-        return
-      }
-      const contentLength: number = ollamaContent.content.split('\n').length - 1
-      const editorDocument: vscode.Uri = activeEditor.document.uri
-      const editorRange: vscode.Range = new vscode.Range(
-        new vscode.Position(ollamaContent.lineStart, ollamaContent.charStart),
-        new vscode.Position(ollamaContent.lineEnd + contentLength, ollamaContent.charEnd)
-      )
-      void this.appliedCompletion(editorDocument, editorRange)
+      void this.appliedCompletion(docUri, docRange)
     }
     vscode.commands.executeCommand('editor.action.inlineSuggest.commit')
   }

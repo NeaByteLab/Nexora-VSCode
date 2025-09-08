@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import * as vscode from 'vscode'
 import { GenerationResult } from '@interfaces/index'
-import { CacheManager, ContextBuilder, StatusBarItem } from '@integrator/index'
+import { ContextBuilder, KeyboardBinding, StatusBarItem } from '@integrator/index'
 import { OllamaService } from '@services/index'
 import { generationSchema, generationFormat } from '@schemas/index'
 import { configSection } from '@constants/index'
@@ -13,23 +13,24 @@ import { configSection } from '@constants/index'
 export default class InlineCompletionProvider implements vscode.InlineCompletionItemProvider {
   /** Ollama service for AI generation */
   private readonly ollamaService: OllamaService
+  /** Keyboard binding service for suggestion actions */
+  private readonly keyboardBinding: KeyboardBinding
   /** Status bar item for suggestion info */
   private readonly statusBarItem: StatusBarItem | undefined
   /** Ongoing AI generation request */
   private ollamaOngoing: Promise<GenerationResult | null> | null = null
   /** Displayed completion */
   private ollamaOnreview: boolean = false
-  /** Completion accept cache */
-  public ollamaContent: GenerationResult | null = null
 
   /**
    * Initializes a new InlineCompletionProvider instance
    * @param ollamaService - Service instance for AI generation
    * @param context - Extension context for managing subscriptions
    */
-  constructor(ollamaService: OllamaService) {
+  constructor(ollamaService: OllamaService, context: vscode.ExtensionContext) {
     this.ollamaService = ollamaService
     this.statusBarItem = new StatusBarItem()
+    this.keyboardBinding = new KeyboardBinding(context)
   }
 
   /**
@@ -64,10 +65,7 @@ export default class InlineCompletionProvider implements vscode.InlineCompletion
       if (token.isCancellationRequested || this.ollamaOngoing) {
         return null
       }
-      this.statusBarItem?.show(
-        '$(loading~spin) Generating Completion...',
-        'Accept Suggestion (TAB)'
-      )
+      this.statusBarItem?.show('$(loading~spin) Generating Completion...')
       this.ollamaOngoing = this.generateCodeCompletion(document, position)
       const completionResult: GenerationResult | null = await this.ollamaOngoing
       console.log(`[DEBUG]\n${JSON.stringify(completionResult)}`)
@@ -123,7 +121,6 @@ export default class InlineCompletionProvider implements vscode.InlineCompletion
         const parseResponse: GenerationResult = (generationSchema as z.ZodSchema).parse(
           parsed
         ) as GenerationResult
-        this.ollamaContent = parseResponse
         return parseResponse
       }
       return null
@@ -146,10 +143,29 @@ export default class InlineCompletionProvider implements vscode.InlineCompletion
     completions?: vscode.InlineCompletionItem[]
   ): void {
     if (event === 'accept' && completions) {
-      CacheManager.set(
-        'CompletionAccept',
-        (this.ollamaContent as unknown as Record<string, unknown>) ?? null
+      const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
+      if (!activeEditor) {
+        return
+      }
+      const completionItem: vscode.InlineCompletionItem =
+        completions[0] as unknown as vscode.InlineCompletionItem
+      const insertText: string =
+        typeof completionItem.insertText === 'string'
+          ? completionItem.insertText
+          : completionItem.insertText?.value || ''
+      const contentLength: number = insertText.split('\n').length - 1
+      const editorDocument: vscode.Uri = activeEditor.document.uri
+      if (!completionItem.range) {
+        return
+      }
+      const editorRange: vscode.Range = new vscode.Range(
+        new vscode.Position(completionItem.range.start.line, completionItem.range.start.character),
+        new vscode.Position(
+          completionItem.range.end.line + contentLength,
+          completionItem.range.end.character
+        )
       )
+      this.keyboardBinding.acceptSuggestion(editorDocument, editorRange)
       this.ollamaOnreview = true
     } else if (this.ollamaOnreview) {
       this.ollamaOnreview = false

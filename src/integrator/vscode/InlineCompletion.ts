@@ -23,7 +23,7 @@ export default class InlineCompletion {
    */
   constructor(ollamaService: OllamaService, context: vscode.ExtensionContext) {
     this.context = context
-    this.inlineCompletionProvider = new InlineCompletionProvider(ollamaService)
+    this.inlineCompletionProvider = new InlineCompletionProvider(ollamaService, context)
     this.keyboardBinding = new KeyboardBinding(context)
   }
 
