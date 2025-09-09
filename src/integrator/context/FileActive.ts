@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import { type SemanticSegment } from '@interfaces/index'
 import { SemanticToken } from '@integrator/context/index'
+import { ErrorHandler } from '@utils/index'
 
 /**
  * Retrieves semantic tokens for the entire document in the editor.
@@ -24,6 +25,6 @@ export default async function (editor: vscode.TextEditor): Promise<void> {
       console.log('[DEBUG] Formatted tokens:', SemanticToken.formatTokens(decodedTokens))
     }
   } catch (error) {
-    console.error('[ERROR] FileActive:', error)
+    ErrorHandler.handle(error, 'FileActive', false)
   }
 }

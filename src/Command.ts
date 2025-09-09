@@ -7,9 +7,9 @@ import { configSection, vscodeSettingsCommand, vscodeSettingsFilter } from '@con
  * Activates extension configuration and registers commands
  * @description Registers all extension commands and adds them to the context subscriptions
  * @param context - Extension context for managing subscriptions
- * @param ollamaService - Service instance for handling operations
  */
-export default function (context: vscode.ExtensionContext, ollamaService: OllamaService): void {
+export default function (context: vscode.ExtensionContext): void {
+  const ollamaService: OllamaService = new OllamaService()
   /** Register open configuration command */
   const openConfigCommand: vscode.Disposable = vscode.commands.registerCommand(
     `${configSection}.OpenConfig`,

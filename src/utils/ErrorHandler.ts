@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { LogLevel } from '@interfaces/index'
-import { configSection, vscodeSettingsButton } from '@constants/index'
+import { vscodeSettingsButton } from '@constants/index'
 
 /**
  * Console method mapping for log level typing
@@ -18,8 +18,6 @@ const consoleMethods: Record<LogLevel, keyof Console> = {
 export default class ErrorHandler {
   /** Default message for unknown errors */
   private static readonly UNKNOWN_ERROR_MESSAGE: string = 'An unknown error occurred'
-  /** Prefix for log messages */
-  private static readonly LOG_PREFIX: string = `[${configSection}]`
 
   /**
    * Handles errors with consistent logging and user notification
@@ -35,8 +33,7 @@ export default class ErrorHandler {
     logLevel: LogLevel = 'error'
   ): void {
     const errorMessage: string = this.getErrorMessage(error)
-    const fullContext: string = `${this.LOG_PREFIX} ${context}`
-    this.logError(errorMessage, fullContext, logLevel)
+    this.logError(errorMessage, context, logLevel)
     if (showToUser) {
       this.showNotification(errorMessage, logLevel, true)
     }
@@ -124,7 +121,7 @@ export default class ErrorHandler {
    */
   private static logError(message: string, context: string, level: LogLevel): void {
     const timestamp: string = new Date().toISOString()
-    const logMessage: string = `${timestamp} [${level.toUpperCase()}] ${context}: ${message}`
+    const logMessage: string = `[${timestamp}] ${level.toUpperCase()} @ ${context}: ${message}`
     const consoleMethod: keyof Console = consoleMethods[level]
     const consoleFn: (...args: string[]) => void = console[consoleMethod] as (
       ...args: string[]
@@ -134,7 +131,7 @@ export default class ErrorHandler {
       const outputChannel: vscode.OutputChannel = vscode.window.createOutputChannel('Extension')
       outputChannel.appendLine(logMessage)
     } catch {
-      // VSCode API Not Available
+      // Ignore
     }
   }
 

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { SemanticToken } from '@integrator/context/index'
+import { ErrorHandler } from '@utils/index'
 
 /**
  * Retrieves semantic tokens for the currently selected text in the editor.
@@ -18,6 +19,6 @@ export default async function (editor: vscode.TextEditor): Promise<void> {
       console.log('[DEBUG] Range semantic tokens:', getSemanticTokens)
     }
   } catch (error) {
-    console.error('[ERROR] FileSelection:', error)
+    ErrorHandler.handle(error, 'FileSelection', false)
   }
 }

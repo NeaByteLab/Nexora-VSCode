@@ -4,7 +4,7 @@ import * as vscode from 'vscode'
  * Manages status bar display for extension notifications
  * @description Provides methods to show, hide, and manage status bar items
  */
-export default class StatusBarItem implements vscode.Disposable {
+export default class StatusBarItem {
   /** Status bar item instance */
   private readonly statusBarItem: vscode.StatusBarItem | undefined
 
@@ -37,16 +37,6 @@ export default class StatusBarItem implements vscode.Disposable {
     if (this.statusBarItem) {
       this.cleanup()
       this.statusBarItem.hide()
-    }
-  }
-
-  /**
-   * Disposes the status bar item and cleans up resources
-   * @description Properly disposes of the status bar item to prevent memory leaks
-   */
-  public dispose(): void {
-    if (this.statusBarItem) {
-      this.statusBarItem.dispose()
     }
   }
 

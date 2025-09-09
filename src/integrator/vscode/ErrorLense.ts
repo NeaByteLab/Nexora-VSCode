@@ -1,0 +1,244 @@
+import * as vscode from 'vscode'
+
+/**
+ * ErrorLense class for displaying diagnostics with visual enhancements
+ * @description Provides line highlighting, diagnostic text append, and gutter icons for errors and warnings
+ */
+export default class ErrorLense {
+  /** Extension context for managing subscriptions */
+  private readonly context: vscode.ExtensionContext
+  /** Decoration type for error line highlighting */
+  private readonly errorLineDecoration: vscode.TextEditorDecorationType
+  /** Decoration type for warning line highlighting */
+  private readonly warningLineDecoration: vscode.TextEditorDecorationType
+  /** Decoration type for info line highlighting */
+  private readonly infoLineDecoration: vscode.TextEditorDecorationType
+  /** Decoration type for diagnostic text append */
+  private readonly diagnosticTextDecoration: vscode.TextEditorDecorationType
+  /** Currently active editor */
+  private activeEditor: vscode.TextEditor | undefined
+
+  /**
+   * Initializes a new ErrorLense instance
+   * @param context - Extension context for managing subscriptions
+   */
+  constructor(context: vscode.ExtensionContext) {
+    this.context = context
+    this.errorLineDecoration = vscode.window.createTextEditorDecorationType({
+      backgroundColor: 'rgba(255, 0, 0, 0.1)',
+      borderWidth: '0 0 0 3px',
+      borderColor: 'rgba(255, 0, 0, 0.5)',
+      isWholeLine: true
+    })
+    this.warningLineDecoration = vscode.window.createTextEditorDecorationType({
+      backgroundColor: 'rgba(255, 165, 0, 0.1)',
+      borderWidth: '0 0 0 3px',
+      borderColor: 'rgba(255, 165, 0, 0.5)',
+      isWholeLine: true
+    })
+    this.infoLineDecoration = vscode.window.createTextEditorDecorationType({
+      backgroundColor: 'rgba(0, 123, 255, 0.1)',
+      borderWidth: '0 0 0 3px',
+      borderColor: 'rgba(0, 123, 255, 0.5)',
+      isWholeLine: true
+    })
+    this.diagnosticTextDecoration = vscode.window.createTextEditorDecorationType({
+      after: {
+        color: 'rgba(128, 128, 128, 0.7)',
+        margin: '0 0 0 1em',
+        fontWeight: 'normal'
+      }
+    })
+  }
+
+  /**
+   * Starts the ErrorLense service
+   * @description Registers event listeners and applies initial decorations
+   */
+  public initialize(): void {
+    try {
+      const activeEditorDisposable: vscode.Disposable = vscode.window.onDidChangeActiveTextEditor(
+        (editor: vscode.TextEditor | undefined) => {
+          this.activeEditor = editor
+          if (editor) {
+            this.updateDecorations(editor)
+          }
+        }
+      )
+      const selectionEditorDisposable: vscode.Disposable =
+        vscode.window.onDidChangeTextEditorSelection(
+          (event: vscode.TextEditorSelectionChangeEvent) => {
+            if (event.textEditor != null) {
+              this.updateDecorations(event.textEditor)
+            }
+          }
+        )
+      const documentChangeDisposable: vscode.Disposable = vscode.workspace.onDidChangeTextDocument(
+        (event: vscode.TextDocumentChangeEvent) => {
+          if (this.activeEditor && this.activeEditor.document === event.document) {
+            this.updateDecorations(this.activeEditor)
+          }
+        }
+      )
+      const diagnosticChangeDisposable: vscode.Disposable = vscode.languages.onDidChangeDiagnostics(
+        (event: vscode.DiagnosticChangeEvent) => {
+          if (this.activeEditor && event.uris.includes(this.activeEditor.document.uri)) {
+            this.updateDecorations(this.activeEditor)
+          }
+        }
+      )
+      this.activeEditor = vscode.window.activeTextEditor
+      if (this.activeEditor) {
+        this.updateDecorations(this.activeEditor)
+      }
+      this.context.subscriptions.push(
+        activeEditorDisposable,
+        selectionEditorDisposable,
+        documentChangeDisposable,
+        diagnosticChangeDisposable
+      )
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
+   * Updates decorations for the given editor
+   * @param editor - The text editor to update decorations for
+   */
+  private updateDecorations(editor: vscode.TextEditor): void {
+    try {
+      const diagnostics: readonly vscode.Diagnostic[] = vscode.languages.getDiagnostics(
+        editor.document.uri
+      )
+      this.clearDecorations(editor)
+      const errorRanges: vscode.Range[] = []
+      const warningRanges: vscode.Range[] = []
+      const infoRanges: vscode.Range[] = []
+      const textDecorations: vscode.DecorationOptions[] = []
+      const lineDiagnostics: Map<number, vscode.Diagnostic[]> = new Map()
+      diagnostics.forEach((diagnostic: vscode.Diagnostic) => {
+        const lineNumber: number = diagnostic.range.start.line
+        if (!lineDiagnostics.has(lineNumber)) {
+          lineDiagnostics.set(lineNumber, [])
+        }
+        lineDiagnostics.get(lineNumber)?.push(diagnostic)
+      })
+      lineDiagnostics.forEach((lineDiags: vscode.Diagnostic[], lineNumber: number) => {
+        const line: vscode.TextLine = editor.document.lineAt(lineNumber)
+        const lineRange: vscode.Range = new vscode.Range(
+          new vscode.Position(lineNumber, 0),
+          new vscode.Position(lineNumber, line.text.length)
+        )
+        let highestSeverity: vscode.DiagnosticSeverity = vscode.DiagnosticSeverity.Hint
+        for (const diagnostic of lineDiags) {
+          if (diagnostic.severity < highestSeverity) {
+            highestSeverity = diagnostic.severity
+          }
+        }
+        switch (highestSeverity) {
+          case vscode.DiagnosticSeverity.Error:
+            errorRanges.push(lineRange)
+            break
+          case vscode.DiagnosticSeverity.Warning:
+            warningRanges.push(lineRange)
+            break
+          case vscode.DiagnosticSeverity.Information:
+            infoRanges.push(lineRange)
+            break
+          case vscode.DiagnosticSeverity.Hint:
+            infoRanges.push(lineRange)
+            break
+        }
+      })
+      const latestDiagnostics: Map<number, vscode.Diagnostic> = new Map()
+      diagnostics.forEach((diagnostic: vscode.Diagnostic) => {
+        const lineNumber: number = diagnostic.range.start.line
+        latestDiagnostics.set(lineNumber, diagnostic)
+      })
+      latestDiagnostics.forEach((diagnostic: vscode.Diagnostic, lineNumber: number) => {
+        const line: vscode.TextLine = editor.document.lineAt(lineNumber)
+        const diagnosticText: string = this.formatDiagnosticText(diagnostic)
+        textDecorations.push({
+          range: new vscode.Range(
+            new vscode.Position(lineNumber, line.text.length),
+            new vscode.Position(lineNumber, line.text.length)
+          ),
+          renderOptions: {
+            after: {
+              contentText: ` ${diagnosticText}`,
+              color: this.getDiagnosticColor(diagnostic.severity)
+            }
+          }
+        })
+      })
+      editor.setDecorations(this.errorLineDecoration, errorRanges)
+      editor.setDecorations(this.warningLineDecoration, warningRanges)
+      editor.setDecorations(this.infoLineDecoration, infoRanges)
+      editor.setDecorations(this.diagnosticTextDecoration, textDecorations)
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
+   * Clears all decorations from the editor
+   * @param editor - The text editor to clear decorations from
+   */
+  private clearDecorations(editor: vscode.TextEditor): void {
+    editor.setDecorations(this.errorLineDecoration, [])
+    editor.setDecorations(this.warningLineDecoration, [])
+    editor.setDecorations(this.infoLineDecoration, [])
+    editor.setDecorations(this.diagnosticTextDecoration, [])
+  }
+
+  /**
+   * Formats diagnostic text for display
+   * @param diagnostic - The diagnostic to format
+   * @returns Formatted diagnostic text
+   */
+  private formatDiagnosticText(diagnostic: vscode.Diagnostic): string {
+    const severity: string = this.getSeverityText(diagnostic.severity)
+    return `[${severity}]: ${diagnostic.message}`
+  }
+
+  /**
+   * Gets the text representation of diagnostic severity
+   * @param severity - The diagnostic severity
+   * @returns Severity text
+   */
+  private getSeverityText(severity: vscode.DiagnosticSeverity): string {
+    switch (severity) {
+      case vscode.DiagnosticSeverity.Error:
+        return 'ERROR'
+      case vscode.DiagnosticSeverity.Warning:
+        return 'WARN'
+      case vscode.DiagnosticSeverity.Information:
+        return 'INFO'
+      case vscode.DiagnosticSeverity.Hint:
+        return 'HINT'
+      default:
+        return 'UNKNOWN'
+    }
+  }
+
+  /**
+   * Gets the color for diagnostic severity
+   * @param severity - The diagnostic severity
+   * @returns Color string
+   */
+  private getDiagnosticColor(severity: vscode.DiagnosticSeverity): string {
+    switch (severity) {
+      case vscode.DiagnosticSeverity.Error:
+        return 'rgba(255, 0, 0, 0.8)'
+      case vscode.DiagnosticSeverity.Warning:
+        return 'rgba(255, 165, 0, 0.8)'
+      case vscode.DiagnosticSeverity.Information:
+        return 'rgba(0, 123, 255, 0.8)'
+      case vscode.DiagnosticSeverity.Hint:
+        return 'rgba(128, 128, 128, 0.8)'
+      default:
+        return 'rgba(128, 128, 128, 0.8)'
+    }
+  }
+}

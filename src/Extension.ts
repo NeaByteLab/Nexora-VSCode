@@ -1,13 +1,12 @@
 import * as vscode from 'vscode'
-import activatedEventCommand from '@eventCommand'
+import activateEventCommand from '@eventCommand'
 import { updateConfigCache, ConfigManager } from '@config/index'
-import { InlineCompletion } from '@integrator/index'
-import { OllamaService } from '@services/index'
+import { ErrorLense, CompletionEvent } from '@integrator/index'
+import { ErrorHandler } from '@utils/index'
 
-/** Service instance for handling code generation operations */
-let ollamaService: OllamaService
-/** Service instance for managing inline completion providers */
-let inlineCompletion: InlineCompletion
+let completionEvent: CompletionEvent
+/** Service instance for managing error lens display */
+let errorLense: ErrorLense
 
 /**
  * Initializes the extension when activated
@@ -15,18 +14,23 @@ let inlineCompletion: InlineCompletion
  * @param context - Extension context for managing subscriptions and lifecycle
  */
 export function activate(context: vscode.ExtensionContext): void {
-  /** Initialize config cache */
-  updateConfigCache()
-  ConfigManager.onDidChangeConfiguration(() => {
+  try {
+    /** Initialize config cache */
     updateConfigCache()
-  })
-  /** Initialize Ollama service for code generation */
-  ollamaService = new OllamaService()
-  /** Initialize completion API for inline suggestions */
-  inlineCompletion = new InlineCompletion(ollamaService, context)
-  inlineCompletion.start()
-  /** Activate command */
-  activatedEventCommand(context, ollamaService)
+    ConfigManager.onDidChangeConfiguration(() => {
+      updateConfigCache()
+    })
+    /** Initialize inline completion */
+    completionEvent = new CompletionEvent(context)
+    completionEvent.initialize()
+    /** Initialize error lens for diagnostic display */
+    errorLense = new ErrorLense(context)
+    errorLense.initialize()
+    /** Activate command */
+    activateEventCommand(context)
+  } catch (error: unknown) {
+    ErrorHandler.handle(error, 'extension activation', true, 'error')
+  }
 }
 
 /**

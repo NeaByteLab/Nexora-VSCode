@@ -1,34 +1,27 @@
 import * as vscode from 'vscode'
 import { vscodeWhitelistExt } from '@constants/index'
-import {
-  InlineCompletionProvider,
-  FileActive,
-  FileSelection,
-  KeyboardBinding
-} from '@integrator/index'
-import { OllamaService } from '@services/index'
+import { FileActive, FileSelection, KeyboardBinding, CompletionProvider } from '@integrator/index'
 import { ErrorHandler } from '@utils/index'
 
 /**
  * Manages inline completion registration and file monitoring
  * Registers completion providers and handles file context for code suggestions
  */
-export default class InlineCompletion {
+export default class CompletionEvent {
   /** Extension context for managing subscriptions */
   private readonly context: vscode.ExtensionContext
   /** Inline suggestion service for code suggestions */
-  private readonly inlineCompletionProvider: InlineCompletionProvider
+  private readonly completionProvider: CompletionProvider
   /** Keyboard binding service for suggestion actions */
   private readonly keyboardBinding: KeyboardBinding
 
   /**
-   * Initializes a new InlineCompletion instance
-   * @param ollamaService - Service instance for handling operations
+   * Initializes a new CompletionEvent instance
    * @param context - Extension context for managing subscriptions
    */
-  constructor(ollamaService: OllamaService, context: vscode.ExtensionContext) {
+  constructor(context: vscode.ExtensionContext) {
     this.context = context
-    this.inlineCompletionProvider = new InlineCompletionProvider(ollamaService, context)
+    this.completionProvider = new CompletionProvider(context)
     this.keyboardBinding = new KeyboardBinding(context)
   }
 
@@ -36,9 +29,9 @@ export default class InlineCompletion {
    * Starts the completion API service
    * Registers inline completion providers for supported file types and sets up keyboard bindings
    */
-  public start(): void {
+  public initialize(): void {
     try {
-      this.keyboardBinding.setup()
+      this.keyboardBinding?.initialize()
       const activeEditorDisposable: vscode.Disposable = vscode.window.onDidChangeActiveTextEditor(
         (event: vscode.TextEditor | undefined) => {
           if (event) {
@@ -60,7 +53,7 @@ export default class InlineCompletion {
             scheme: 'file',
             pattern: `**/*.{${vscodeWhitelistExt.join(',')}}`
           },
-          this.inlineCompletionProvider
+          this.completionProvider
         )
       this.context.subscriptions.push(
         activeEditorDisposable,
@@ -68,7 +61,7 @@ export default class InlineCompletion {
         completionDisposable
       )
     } catch (error: unknown) {
-      ErrorHandler.handle(error, 'file listener initialization', true, 'error')
+      ErrorHandler.handle(error, 'completion listener initialization', true, 'error')
     }
   }
 }

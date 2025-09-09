@@ -27,7 +27,7 @@ export const generationSchema: z.ZodEffects<
     /** Generated code content to insert */
     content: z.string().min(10).describe('Generated code content to insert'),
     /** Descriptive title of the code suggestion */
-    title: z.string().min(10).max(50).describe('Descriptive title of the code suggestion')
+    title: z.string().min(10).describe('Descriptive title of the code suggestion')
   })
   /** Validates that lineStart is less than or equal to lineEnd */
   .refine((data: { lineStart: number; lineEnd: number }) => data.lineStart <= data.lineEnd, {

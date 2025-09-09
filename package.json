@@ -17,11 +17,8 @@
     "vscode": "^1.103.0"
   },
   "activationEvents": [
-    "onCommand:Nexora-AI.OpenConfig",
-    "onCommand:Nexora-AI.CheckConfig",
-    "onCommand:Nexora-AI.SelectModel",
-    "onCommand:Nexora-AI.SelectDatabase",
-    "onCommand:Nexora-AI.TestService"
+    "onUri",
+    "onStartupFinished"
   ],
   "categories": [
     "Other"

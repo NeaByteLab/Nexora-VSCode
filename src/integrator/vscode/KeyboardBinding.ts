@@ -1,6 +1,4 @@
 import * as vscode from 'vscode'
-import { GenerationResult } from '@interfaces/index'
-import { CacheManager } from '@integrator/index'
 import { ErrorHandler } from '@utils/index'
 import { configSection } from '@constants/index'
 
@@ -23,7 +21,7 @@ export default class KeyboardBinding {
   /**
    * Registers keyboard shortcuts for suggestion actions
    */
-  public setup(): void {
+  public initialize(): void {
     const acceptCtrlCommand: vscode.Disposable = vscode.commands.registerCommand(
       `${configSection}.AcceptSuggestion`,
       (docUri: vscode.Uri, docRange: vscode.Range) => {
@@ -44,13 +42,7 @@ export default class KeyboardBinding {
    * @description Commits the active suggestion to the document
    */
   public acceptSuggestion(docUri: vscode.Uri, docRange: vscode.Range): void {
-    const ollamaContent: GenerationResult | null = CacheManager.get(
-      'CompletionAccept'
-    ) as GenerationResult | null
-    if (ollamaContent) {
-      void this.appliedCompletion(docUri, docRange)
-    }
-    vscode.commands.executeCommand('editor.action.inlineSuggest.commit')
+    void this.appliedCompletion(docUri, docRange)
   }
 
   /**
@@ -69,17 +61,17 @@ export default class KeyboardBinding {
    * @returns Promise that resolves when code actions are processed
    */
   private async appliedCompletion(docUri: vscode.Uri, docRange: vscode.Range): Promise<void> {
-    const codeActions: vscode.CodeAction[] = await vscode.commands.executeCommand<
-      vscode.CodeAction[]
-    >('vscode.executeCodeActionProvider', docUri, docRange)
-    const quickFixActions: vscode.CodeAction[] = codeActions.filter(
-      (action: vscode.CodeAction) =>
-        (action.kind?.contains(vscode.CodeActionKind.QuickFix) ?? false) &&
-        action.title.toLowerCase().includes('import')
-    )
-    if (quickFixActions.length === 1 && quickFixActions[0]) {
-      const firstAction: vscode.CodeAction = quickFixActions[0]
-      try {
+    try {
+      const codeActions: vscode.CodeAction[] = await vscode.commands.executeCommand<
+        vscode.CodeAction[]
+      >('vscode.executeCodeActionProvider', docUri, docRange)
+      const quickFixActions: vscode.CodeAction[] = codeActions.filter(
+        (action: vscode.CodeAction) =>
+          (action.kind?.contains(vscode.CodeActionKind.QuickFix) ?? false) &&
+          action.title.toLowerCase().includes('import')
+      )
+      if (quickFixActions.length === 1 && quickFixActions[0]) {
+        const firstAction: vscode.CodeAction = quickFixActions[0]
         if (firstAction.edit) {
           await vscode.workspace.applyEdit(firstAction.edit)
         }
@@ -89,9 +81,10 @@ export default class KeyboardBinding {
             firstAction.command.arguments
           )
         }
-      } catch (error: unknown) {
-        ErrorHandler.handle(error, 'applied completion', true, 'error')
       }
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, 'appliedCompletion', false)
+      vscode.commands.executeCommand('editor.action.inlineSuggest.commit')
     }
   }
 }

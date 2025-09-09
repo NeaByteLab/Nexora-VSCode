@@ -5,12 +5,13 @@ import { ContextBuilder, KeyboardBinding, StatusBarItem } from '@integrator/inde
 import { OllamaService } from '@services/index'
 import { generationSchema, generationFormat } from '@schemas/index'
 import { configSection } from '@constants/index'
+import { ErrorHandler } from '@utils/index'
 
 /**
  * Manages inline code suggestions using the editor's InlineCompletionItemProvider
  * @description Provides inline suggestions with keyboard shortcuts for code completion
  */
-export default class InlineCompletionProvider implements vscode.InlineCompletionItemProvider {
+export default class CompletionProvider implements vscode.InlineCompletionItemProvider {
   /** Ollama service for AI generation */
   private readonly ollamaService: OllamaService
   /** Keyboard binding service for suggestion actions */
@@ -24,11 +25,10 @@ export default class InlineCompletionProvider implements vscode.InlineCompletion
 
   /**
    * Initializes a new InlineCompletionProvider instance
-   * @param ollamaService - Service instance for AI generation
    * @param context - Extension context for managing subscriptions
    */
-  constructor(ollamaService: OllamaService, context: vscode.ExtensionContext) {
-    this.ollamaService = ollamaService
+  constructor(context: vscode.ExtensionContext) {
+    this.ollamaService = new OllamaService()
     this.statusBarItem = new StatusBarItem()
     this.keyboardBinding = new KeyboardBinding(context)
   }
@@ -93,8 +93,11 @@ export default class InlineCompletionProvider implements vscode.InlineCompletion
       )
       this.handleEvent('show', [completionItem])
       return [completionItem]
-    } catch {
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, 'provideInlineCompletionItems', false)
       return null
+    } finally {
+      this.ollamaOngoing = null
     }
   }
 
@@ -124,10 +127,10 @@ export default class InlineCompletionProvider implements vscode.InlineCompletion
         return parseResponse
       }
       return null
-    } catch {
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, 'generateCodeCompletion', false)
       return null
     } finally {
-      this.ollamaOngoing = null
       this.statusBarItem?.hide()
     }
   }
@@ -170,13 +173,5 @@ export default class InlineCompletionProvider implements vscode.InlineCompletion
     } else if (this.ollamaOnreview) {
       this.ollamaOnreview = false
     }
-  }
-
-  /**
-   * Disposes the inline suggestion service and cleans up resources
-   * @description Clears suggestions and disposes status bar item
-   */
-  public dispose(): void {
-    this.statusBarItem?.dispose()
   }
 }
