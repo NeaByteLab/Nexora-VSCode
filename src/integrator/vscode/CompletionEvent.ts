@@ -1,11 +1,11 @@
 import * as vscode from 'vscode'
 import { vscodeWhitelistExt } from '@constants/index'
-import { FileActive, FileSelection, KeyboardBinding, CompletionProvider } from '@integrator/index'
+import { KeyboardBinding, CompletionProvider } from '@integrator/index'
 import { ErrorHandler } from '@utils/index'
 
 /**
  * Manages inline completion registration and file monitoring
- * Registers completion providers and handles file context for code suggestions
+ * @description Registers completion providers and handles file context for code suggestions
  */
 export default class CompletionEvent {
   /** Extension context for managing subscriptions */
@@ -26,27 +26,11 @@ export default class CompletionEvent {
   }
 
   /**
-   * Starts the completion API service
-   * Registers inline completion providers for supported file types and sets up keyboard bindings
+   * Initializes the completion service by registering providers and keyboard bindings
    */
   public initialize(): void {
     try {
       this.keyboardBinding?.initialize()
-      const activeEditorDisposable: vscode.Disposable = vscode.window.onDidChangeActiveTextEditor(
-        (event: vscode.TextEditor | undefined) => {
-          if (event) {
-            void FileActive(event)
-          }
-        }
-      )
-      const selectionEditorDisposable: vscode.Disposable =
-        vscode.window.onDidChangeTextEditorSelection(
-          (event: vscode.TextEditorSelectionChangeEvent) => {
-            if (event.selections.length > 0) {
-              void FileSelection(event.textEditor)
-            }
-          }
-        )
       const completionDisposable: vscode.Disposable =
         vscode.languages.registerInlineCompletionItemProvider(
           {
@@ -55,11 +39,7 @@ export default class CompletionEvent {
           },
           this.completionProvider
         )
-      this.context.subscriptions.push(
-        activeEditorDisposable,
-        selectionEditorDisposable,
-        completionDisposable
-      )
+      this.context.subscriptions.push(completionDisposable)
     } catch (error: unknown) {
       ErrorHandler.handle(error, 'completion listener initialization', true, 'error')
     }

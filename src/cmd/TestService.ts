@@ -12,7 +12,7 @@ import { configSection } from '@constants/index'
  * @returns Promise that resolves when the test is complete
  */
 export default async function (ollamaService: OllamaService): Promise<void> {
-  const statusBarItem: StatusBarItem = new StatusBarItem()
+  const statusBarItem: StatusBarItem = StatusBarItem.getInstance()
   statusBarItem?.show('$(loading~spin) Testing Endpoint...')
   const resCompletion: ChatResponse | CompletionResult = await ollamaService.generateCompletion(
     'User running tests the availability of the service, please respond with a simple message max 10 words'

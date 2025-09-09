@@ -1,9 +1,10 @@
 import * as vscode from 'vscode'
 import activateEventCommand from '@eventCommand'
 import { updateConfigCache, ConfigManager } from '@config/index'
-import { ErrorLense, CompletionEvent } from '@integrator/index'
+import { ErrorLense, CompletionEvent, StatusBarItem } from '@integrator/index'
 import { ErrorHandler } from '@utils/index'
 
+/** Service instance for managing completion events */
 let completionEvent: CompletionEvent
 /** Service instance for managing error lens display */
 let errorLense: ErrorLense
@@ -38,5 +39,5 @@ export function activate(context: vscode.ExtensionContext): void {
  * @description Called when the editor shuts down or extension is disabled
  */
 export function deactivate(): void {
-  return undefined
+  StatusBarItem.dispose()
 }

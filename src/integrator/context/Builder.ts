@@ -21,10 +21,6 @@ class ContextBuilder {
 - Selected Position: Line ${context.selectedData.selectedLineNumber}, Char ${context.selectedData.selectedCharacterPosition}
 - Selected Line: "${context.selectedData.selectedLineText}"
 - Is Dirty: ${context.fileData.fileIsDirty ? 'Yes' : 'No'}
-- Errors: [${context.diagnosticData?.problemErrCount}], Warnings: [${context.diagnosticData?.problemWarningCount}]
-
-# Diagnostics List
-${context.diagnosticData?.problemList ?? 'No diagnostics found'}
 
 # Code Before Cursor
 \`\`\`${context.fileData.fileLanguageId}
@@ -92,6 +88,6 @@ You must respond with valid JSON in the following format:
 
 /**
  * Singleton instance of ContextBuilder
- * Provides a single instance of the ContextBuilder class
+ * @description Provides a single instance of the ContextBuilder class for global access
  */
 export default new ContextBuilder()

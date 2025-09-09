@@ -52,8 +52,7 @@ export default class ErrorLense {
   }
 
   /**
-   * Starts the ErrorLense service
-   * @description Registers event listeners and applies initial decorations
+   * Initializes the ErrorLense service by registering event listeners and applying decorations
    */
   public initialize(): void {
     try {
@@ -103,7 +102,7 @@ export default class ErrorLense {
   }
 
   /**
-   * Updates decorations for the given editor
+   * Updates visual decorations for the given editor based on diagnostics
    * @param editor - The text editor to update decorations for
    */
   private updateDecorations(editor: vscode.TextEditor): void {
@@ -182,7 +181,7 @@ export default class ErrorLense {
   }
 
   /**
-   * Clears all decorations from the editor
+   * Removes all visual decorations from the editor
    * @param editor - The text editor to clear decorations from
    */
   private clearDecorations(editor: vscode.TextEditor): void {
@@ -193,9 +192,9 @@ export default class ErrorLense {
   }
 
   /**
-   * Formats diagnostic text for display
+   * Formats diagnostic text for inline display
    * @param diagnostic - The diagnostic to format
-   * @returns Formatted diagnostic text
+   * @returns Formatted diagnostic text with severity prefix
    */
   private formatDiagnosticText(diagnostic: vscode.Diagnostic): string {
     const severity: string = this.getSeverityText(diagnostic.severity)
@@ -203,9 +202,9 @@ export default class ErrorLense {
   }
 
   /**
-   * Gets the text representation of diagnostic severity
-   * @param severity - The diagnostic severity
-   * @returns Severity text
+   * Converts diagnostic severity to text representation
+   * @param severity - The diagnostic severity level
+   * @returns Text representation of the severity level
    */
   private getSeverityText(severity: vscode.DiagnosticSeverity): string {
     switch (severity) {
@@ -223,9 +222,9 @@ export default class ErrorLense {
   }
 
   /**
-   * Gets the color for diagnostic severity
-   * @param severity - The diagnostic severity
-   * @returns Color string
+   * Returns the color code for diagnostic severity display
+   * @param severity - The diagnostic severity level
+   * @returns RGBA color string for the severity level
    */
   private getDiagnosticColor(severity: vscode.DiagnosticSeverity): string {
     switch (severity) {

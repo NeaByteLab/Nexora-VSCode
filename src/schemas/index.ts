@@ -25,9 +25,9 @@ export const generationSchema: z.ZodEffects<
     /** Ending character position for code replacement (0-based index) */
     charEnd: z.number().int().min(0).describe('Ending character position for code replacement'),
     /** Generated code content to insert */
-    content: z.string().min(10).describe('Generated code content to insert'),
+    content: z.string().min(1).describe('Generated code content to insert'),
     /** Descriptive title of the code suggestion */
-    title: z.string().min(10).describe('Descriptive title of the code suggestion')
+    title: z.string().min(1).describe('Descriptive title of the code suggestion')
   })
   /** Validates that lineStart is less than or equal to lineEnd */
   .refine((data: { lineStart: number; lineEnd: number }) => data.lineStart <= data.lineEnd, {

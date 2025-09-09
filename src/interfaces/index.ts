@@ -7,6 +7,18 @@ import * as vscode from 'vscode'
 export type LogLevel = 'error' | 'warning' | 'info'
 
 /**
+ * Event type for completion events
+ * @description Defines available event types for completion
+ */
+export type EventType = 'show' | 'accept' | 'dismiss' | 'accept_word' | 'accept_line'
+
+/**
+ * Completion type for completion events
+ * @description Defines available completion types for completion
+ */
+export type CompletionType = 'action' | 'completion'
+
+/**
  * Result type for completion operations
  * @description Represents the response from text generation services
  */

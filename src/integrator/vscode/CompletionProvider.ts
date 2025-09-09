@@ -1,9 +1,7 @@
-import { z } from 'zod'
 import * as vscode from 'vscode'
 import { GenerationResult } from '@interfaces/index'
-import { ContextBuilder, KeyboardBinding, StatusBarItem } from '@integrator/index'
+import { CodeGenerator, StatusBarItem } from '@integrator/index'
 import { OllamaService } from '@services/index'
-import { generationSchema, generationFormat } from '@schemas/index'
 import { configSection } from '@constants/index'
 import { ErrorHandler } from '@utils/index'
 
@@ -14,10 +12,8 @@ import { ErrorHandler } from '@utils/index'
 export default class CompletionProvider implements vscode.InlineCompletionItemProvider {
   /** Ollama service for AI generation */
   private readonly ollamaService: OllamaService
-  /** Keyboard binding service for suggestion actions */
-  private readonly keyboardBinding: KeyboardBinding
-  /** Status bar item for suggestion info */
-  private readonly statusBarItem: StatusBarItem | undefined
+  /** Status bar item for suggestion info (singleton instance) */
+  private readonly statusBarItem: StatusBarItem
   /** Ongoing AI generation request */
   private ollamaOngoing: Promise<GenerationResult | null> | null = null
   /** Displayed completion */
@@ -29,8 +25,29 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
    */
   constructor(context: vscode.ExtensionContext) {
     this.ollamaService = new OllamaService()
-    this.statusBarItem = new StatusBarItem()
-    this.keyboardBinding = new KeyboardBinding(context)
+    this.statusBarItem = StatusBarItem.getInstance()
+    this.setupEventListeners(context)
+  }
+
+  /**
+   * Sets up event listeners for completion interactions
+   * @param context - Extension context for managing subscriptions
+   */
+  private setupEventListeners(context: vscode.ExtensionContext): void {
+    const selectionChangeDisposable: vscode.Disposable =
+      vscode.window.onDidChangeTextEditorSelection(() => {
+        if (this.ollamaOnreview) {
+          this.ollamaOnreview = false
+        }
+      })
+    const documentChangeDisposable: vscode.Disposable = vscode.workspace.onDidChangeTextDocument(
+      (event: vscode.TextDocumentChangeEvent) => {
+        if (event.contentChanges.length > 0 && this.ollamaOnreview) {
+          this.ollamaOnreview = false
+        }
+      }
+    )
+    context.subscriptions.push(selectionChangeDisposable, documentChangeDisposable)
   }
 
   /**
@@ -48,50 +65,30 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
     token: vscode.CancellationToken
   ): Promise<vscode.InlineCompletionItem[] | null> {
     try {
-      if (this.ollamaOnreview) {
-        this.handleEvent('dismiss')
-      }
-      const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
-      if (!activeEditor || activeEditor.document.fileName !== document.fileName) {
-        return null
-      }
-      if (
-        context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic &&
-        vscode.window.activeTextEditor &&
-        !vscode.window.activeTextEditor.selection.isEmpty
-      ) {
-        return null
-      }
-      if (token.isCancellationRequested || this.ollamaOngoing) {
-        return null
-      }
-      this.statusBarItem?.show('$(loading~spin) Generating Completion...')
-      this.ollamaOngoing = this.generateCodeCompletion(document, position)
+      this.handleSessionCompletion(document, context, token)
+      this.statusBarItem.show('$(loading~spin) Generating Completion...')
+      this.ollamaOngoing = CodeGenerator(document, position, this.ollamaService, this.statusBarItem)
       const completionResult: GenerationResult | null = await this.ollamaOngoing
-      console.log(`[DEBUG]\n${JSON.stringify(completionResult)}`)
       if (!completionResult || token.isCancellationRequested) {
         return null
       }
-      this.statusBarItem?.show(`$(lightbulb) ${configSection}: ${completionResult.title}`)
+      this.statusBarItem.show(`$(lightbulb) ${configSection}: ${completionResult.title}`)
+      const completionRange: vscode.Range = new vscode.Range(
+        new vscode.Position(completionResult.lineStart - 1, completionResult.charStart),
+        new vscode.Position(completionResult.lineEnd - 1, completionResult.charEnd)
+      )
       const completionItem: vscode.InlineCompletionItem = new vscode.InlineCompletionItem(
         typeof completionResult.content === 'string'
           ? completionResult.content
           : new vscode.SnippetString(completionResult.content),
-        new vscode.Range(
-          new vscode.Position(completionResult.lineStart - 1, completionResult.charStart),
-          new vscode.Position(completionResult.lineEnd - 1, completionResult.charEnd)
-        ),
+        completionRange,
         {
-          title: '',
+          title: 'Accept suggestion',
           command: `${configSection}.AcceptSuggestion`,
-          arguments: [
-            (): void => {
-              this.handleEvent('accept', [completionItem])
-            }
-          ]
+          arguments: [document.uri, completionRange, 'completion']
         }
       )
-      this.handleEvent('show', [completionItem])
+      this.ollamaOnreview = true
       return [completionItem]
     } catch (error: unknown) {
       ErrorHandler.handle(error, 'provideInlineCompletionItems', false)
@@ -102,76 +99,30 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
   }
 
   /**
-   * Generates code completion using AI service for the given document and position
-   * @param document - The text document to generate completion for
-   * @param position - The cursor position in the document
-   * @returns Generated completion result or null if generation failed
+   * Validates completion session conditions and handles early returns
+   * @param document - The text document for completion
+   * @param context - The completion context information
+   * @param token - The cancellation token for the operation
+   * @returns null if completion should be skipped, undefined if validation passes
    */
-  private async generateCodeCompletion(
+  private handleSessionCompletion(
     document: vscode.TextDocument,
-    position: vscode.Position
-  ): Promise<GenerationResult | null> {
-    try {
-      const context: string = ContextBuilder.getUserPrompt(document, position)
-      const response: unknown = await this.ollamaService.generateCompletion(
-        context,
-        generationFormat
-      )
-      if (typeof response === 'object' && response !== null && 'message' in response) {
-        const parsed: object = JSON.parse(
-          (response as { message: { content: string } }).message.content
-        ) as object
-        const parseResponse: GenerationResult = (generationSchema as z.ZodSchema).parse(
-          parsed
-        ) as GenerationResult
-        return parseResponse
-      }
+    context: vscode.InlineCompletionContext,
+    token: vscode.CancellationToken
+  ): void | null {
+    const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
+    if (!activeEditor || activeEditor.document.fileName !== document.fileName) {
       return null
-    } catch (error: unknown) {
-      ErrorHandler.handle(error, 'generateCodeCompletion', false)
-      return null
-    } finally {
-      this.statusBarItem?.hide()
     }
-  }
-
-  /**
-   * Handles completion events and manages state
-   * @param event - The event type to handle
-   * @param completions - Optional array of completion items for accept events
-   * @description Manages completion state transitions and caching for different event types
-   */
-  private handleEvent(
-    event: 'show' | 'accept' | 'dismiss' | 'accept_word' | 'accept_line',
-    completions?: vscode.InlineCompletionItem[]
-  ): void {
-    if (event === 'accept' && completions) {
-      const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
-      if (!activeEditor) {
-        return
-      }
-      const completionItem: vscode.InlineCompletionItem =
-        completions[0] as unknown as vscode.InlineCompletionItem
-      const insertText: string =
-        typeof completionItem.insertText === 'string'
-          ? completionItem.insertText
-          : completionItem.insertText?.value || ''
-      const contentLength: number = insertText.split('\n').length - 1
-      const editorDocument: vscode.Uri = activeEditor.document.uri
-      if (!completionItem.range) {
-        return
-      }
-      const editorRange: vscode.Range = new vscode.Range(
-        new vscode.Position(completionItem.range.start.line, completionItem.range.start.character),
-        new vscode.Position(
-          completionItem.range.end.line + contentLength,
-          completionItem.range.end.character
-        )
-      )
-      this.keyboardBinding.acceptSuggestion(editorDocument, editorRange)
-      this.ollamaOnreview = true
-    } else if (this.ollamaOnreview) {
-      this.ollamaOnreview = false
+    if (
+      context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic &&
+      vscode.window.activeTextEditor &&
+      !vscode.window.activeTextEditor.selection.isEmpty
+    ) {
+      return null
+    }
+    if (token.isCancellationRequested || this.ollamaOngoing) {
+      return null
     }
   }
 }
