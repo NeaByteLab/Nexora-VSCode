@@ -4,7 +4,7 @@ import { GetFileData, GetDiagnostic } from '@integrator/context/index'
 
 /**
  * Builds context strings for code generation requests
- * @description Combines file data and diagnostic information into formatted context strings
+ * Combines file data and diagnostic information into formatted context strings
  */
 class ContextBuilder {
   /**
@@ -92,6 +92,6 @@ You must respond with valid JSON in the following format:
 
 /**
  * Singleton instance of ContextBuilder
- * @description Provides a single instance of the ContextBuilder class
+ * Provides a single instance of the ContextBuilder class
  */
 export default new ContextBuilder()

@@ -1,12 +1,17 @@
 import * as vscode from 'vscode'
 import { vscodeWhitelistExt } from '@constants/index'
-import { InlineCompletionProvider, KeyboardBinding } from '@integrator/index'
+import {
+  InlineCompletionProvider,
+  FileActive,
+  FileSelection,
+  KeyboardBinding
+} from '@integrator/index'
 import { OllamaService } from '@services/index'
 import { ErrorHandler } from '@utils/index'
 
 /**
  * Manages inline completion registration and file monitoring
- * @description Registers completion providers and handles file context for code suggestions
+ * Registers completion providers and handles file context for code suggestions
  */
 export default class InlineCompletion {
   /** Extension context for managing subscriptions */
@@ -29,12 +34,26 @@ export default class InlineCompletion {
 
   /**
    * Starts the completion API service
-   * @description Registers inline completion providers for supported file types and sets up keyboard bindings
-   * @returns void
+   * Registers inline completion providers for supported file types and sets up keyboard bindings
    */
   public start(): void {
     try {
       this.keyboardBinding.setup()
+      const activeEditorDisposable: vscode.Disposable = vscode.window.onDidChangeActiveTextEditor(
+        (event: vscode.TextEditor | undefined) => {
+          if (event) {
+            void FileActive(event)
+          }
+        }
+      )
+      const selectionEditorDisposable: vscode.Disposable =
+        vscode.window.onDidChangeTextEditorSelection(
+          (event: vscode.TextEditorSelectionChangeEvent) => {
+            if (event.selections.length > 0) {
+              void FileSelection(event.textEditor)
+            }
+          }
+        )
       const completionDisposable: vscode.Disposable =
         vscode.languages.registerInlineCompletionItemProvider(
           {
@@ -43,7 +62,11 @@ export default class InlineCompletion {
           },
           this.inlineCompletionProvider
         )
-      this.context.subscriptions.push(completionDisposable)
+      this.context.subscriptions.push(
+        activeEditorDisposable,
+        selectionEditorDisposable,
+        completionDisposable
+      )
     } catch (error: unknown) {
       ErrorHandler.handle(error, 'file listener initialization', true, 'error')
     }

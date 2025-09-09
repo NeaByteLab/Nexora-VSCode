@@ -1,3 +1,5 @@
+import * as vscode from 'vscode'
+
 /**
  * Log level type for error handling
  * @description Defines available logging severity levels
@@ -137,4 +139,19 @@ export interface DiagnosticContextData {
   problemErrCount: number
   /** Number of warning problems found */
   problemWarningCount: number
+}
+
+/**
+ * Represents a semantic token segment with text content and metadata
+ * @description Contains the text content, semantic type, modifiers, and range of the token
+ */
+export type SemanticSegment = {
+  /** The text content of the token */
+  text: string
+  /** The semantic type of the token */
+  tokenType: string
+  /** Array of semantic modifiers applied to the token */
+  tokenModifiers: string[]
+  /** The range position of the token in the document */
+  range: vscode.Range
 }
