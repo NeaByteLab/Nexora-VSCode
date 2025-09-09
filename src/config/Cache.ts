@@ -25,7 +25,7 @@ export function isConfigChanged(): boolean {
     return true
   }
   return (
-    config.host !== cachedConfig.host ||
+    config.urlHost !== cachedConfig.urlHost ||
     config.databasePath !== cachedConfig.databasePath ||
     config.selectedModel !== cachedConfig.selectedModel
   )

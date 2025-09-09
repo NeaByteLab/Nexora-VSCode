@@ -19,7 +19,7 @@ export default class ConfigManager {
    * Gets the host URL from configuration
    * @returns Host URL or default value
    */
-  public static getHost(): string {
+  public static getUrlHost(): string {
     const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(configSection)
     return config.get<string>(configUrlHost) ?? defaultHost
   }
@@ -28,7 +28,7 @@ export default class ConfigManager {
    * Updates the host configuration setting
    * @param host - New host URL to set
    */
-  public static async setHost(host: string): Promise<void> {
+  public static async setUrlHost(host: string): Promise<void> {
     const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(configSection)
     await config.update(configUrlHost, host, vscode.ConfigurationTarget.Global)
   }
@@ -75,7 +75,7 @@ export default class ConfigManager {
    */
   public static getConfig(): ConfigurationData {
     return {
-      host: ConfigManager.getHost(),
+      urlHost: ConfigManager.getUrlHost(),
       databasePath: ConfigManager.getDatabasePath(),
       selectedModel: ConfigManager.getSelectedModel()
     }

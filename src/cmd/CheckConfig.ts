@@ -13,7 +13,7 @@ import { vscodeSettingsCommand, vscodeSettingsFilter } from '@constants/index'
 export default async function (ollamaService: OllamaService): Promise<void> {
   try {
     const config: ConfigurationData = ConfigManager.getConfig()
-    if (Validator.isOllamaUrl(config.host) && !Validator.isValidPath(config.databasePath)) {
+    if (Validator.isOllamaUrl(config.urlHost) && !Validator.isValidPath(config.databasePath)) {
       ErrorHandler.showNotification(
         `Invalid database path: ${config.databasePath}.`,
         'warning',

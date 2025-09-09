@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { vscodeWhitelistExt } from '@constants/index'
-import { KeyboardBinding, CompletionProvider } from '@integrator/index'
+import { KeyboardBinding, CompletionProvider, CodeActionLint } from '@integrator/index'
 import { ErrorHandler } from '@utils/index'
 
 /**
@@ -14,6 +14,8 @@ export default class CompletionEvent {
   private readonly completionProvider: CompletionProvider
   /** Keyboard binding service for suggestion actions */
   private readonly keyboardBinding: KeyboardBinding
+  /** Code action provider for lint fixes */
+  private readonly codeActionLint: CodeActionLint
 
   /**
    * Initializes a new CompletionEvent instance
@@ -23,6 +25,7 @@ export default class CompletionEvent {
     this.context = context
     this.completionProvider = new CompletionProvider(context)
     this.keyboardBinding = new KeyboardBinding(context)
+    this.codeActionLint = new CodeActionLint(context)
   }
 
   /**
@@ -31,6 +34,13 @@ export default class CompletionEvent {
   public initialize(): void {
     try {
       this.keyboardBinding?.initialize()
+      const codeActionDisposable: vscode.Disposable = vscode.languages.registerCodeActionsProvider(
+        {
+          scheme: 'file',
+          pattern: `**/*.{${vscodeWhitelistExt.join(',')}}`
+        },
+        this.codeActionLint
+      )
       const completionDisposable: vscode.Disposable =
         vscode.languages.registerInlineCompletionItemProvider(
           {
@@ -39,7 +49,7 @@ export default class CompletionEvent {
           },
           this.completionProvider
         )
-      this.context.subscriptions.push(completionDisposable)
+      this.context.subscriptions.push(completionDisposable, codeActionDisposable)
     } catch (error: unknown) {
       ErrorHandler.handle(error, 'completion listener initialization', true, 'error')
     }

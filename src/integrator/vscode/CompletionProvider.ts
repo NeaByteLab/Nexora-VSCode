@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { GenerationResult } from '@interfaces/index'
-import { CodeGenerator, StatusBarItem } from '@integrator/index'
+import { requestInlineCompletion, StatusBarItem } from '@integrator/index'
 import { OllamaService } from '@services/index'
 import { configSection } from '@constants/index'
 import { ErrorHandler } from '@utils/index'
@@ -67,7 +67,12 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
     try {
       this.handleSessionCompletion(document, context, token)
       this.statusBarItem.show('$(loading~spin) Generating Completion...')
-      this.ollamaOngoing = CodeGenerator(document, position, this.ollamaService, this.statusBarItem)
+      this.ollamaOngoing = requestInlineCompletion(
+        document,
+        position,
+        this.ollamaService,
+        this.statusBarItem
+      )
       const completionResult: GenerationResult | null = await this.ollamaOngoing
       if (!completionResult || token.isCancellationRequested) {
         return null

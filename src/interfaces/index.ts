@@ -16,7 +16,7 @@ export type EventType = 'show' | 'accept' | 'dismiss' | 'accept_word' | 'accept_
  * Completion type for completion events
  * @description Defines available completion types for completion
  */
-export type CompletionType = 'action' | 'completion'
+export type CompletionType = 'action' | 'completion' | 'lint'
 
 /**
  * Result type for completion operations
@@ -87,7 +87,7 @@ export interface AccountData {
  */
 export interface ConfigurationData {
   /** Service host URL for API communication */
-  host: string
+  urlHost: string
   /** File path to the SQLite database */
   databasePath: string
   /** Name of the currently selected model */
@@ -129,28 +129,6 @@ export interface FileContextData {
     /** All text content after the cursor position */
     selectedTextAfterCursor: string
   }
-  /** Optional diagnostic information */
-  diagnosticData?: {
-    /** Formatted list of diagnostic problems */
-    problemList: string
-    /** Number of error problems found */
-    problemErrCount: number
-    /** Number of warning problems found */
-    problemWarningCount: number
-  }
-}
-
-/**
- * Diagnostic context data structure for error analysis
- * @description Contains diagnostic information from code analysis
- */
-export interface DiagnosticContextData {
-  /** Formatted list of diagnostic problems */
-  problemList: string
-  /** Number of error problems found */
-  problemErrCount: number
-  /** Number of warning problems found */
-  problemWarningCount: number
 }
 
 /**

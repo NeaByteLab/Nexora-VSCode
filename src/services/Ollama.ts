@@ -1,5 +1,5 @@
 import { Ollama, ChatResponse } from 'ollama'
-import { ChatRequest, AccountData, CompletionResult } from '@interfaces/index'
+import { ChatRequest, AccountData, CompletionResult, CompletionType } from '@interfaces/index'
 import { ContextBuilder } from '@integrator/index'
 import { KnexManager, ConfigManager } from '@config/index'
 import { ErrorHandler, Validator } from '@utils/index'
@@ -33,12 +33,12 @@ export default class OllamaService {
    * @description Configures the service and sets up configuration change listeners
    */
   constructor() {
-    this.urlHost = ConfigManager.getHost()
+    this.urlHost = ConfigManager.getUrlHost()
     this.databasePath = ConfigManager.getDatabasePath()
     this.selectedModel = ConfigManager.getSelectedModel()
     this.ollama = new Ollama({ host: this.urlHost })
     ConfigManager.onDidChangeConfiguration(() => {
-      this.urlHost = ConfigManager.getHost()
+      this.urlHost = ConfigManager.getUrlHost()
       this.databasePath = ConfigManager.getDatabasePath()
       this.selectedModel = ConfigManager.getSelectedModel()
       this.ollama = new Ollama({ host: this.urlHost })
@@ -98,12 +98,13 @@ export default class OllamaService {
    */
   public async generateCompletion(
     prompt: string,
-    format?: object
+    format?: object,
+    type: CompletionType = 'completion'
   ): Promise<ChatResponse | CompletionResult> {
     try {
       this.ollama = await this.getInstance()
       const chatMessages: Array<{ role: string; content: string }> = []
-      const systemContext: string = ContextBuilder.getSystemPrompt()
+      const systemContext: string = ContextBuilder.getSystemPrompt(type)
       if (format) {
         chatMessages.push({ role: 'system', content: systemContext })
       }
