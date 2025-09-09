@@ -16,11 +16,17 @@ VSCode extension foundation for AI code assistance. Monitors file changes and ca
 - **Account management** - Database storage for API keys and limits
 - **Service testing** - Test connectivity to AI services
 
+### 🎯 **Context Menus & Shortcuts**
+- **Right-click Access** - Editor and Explorer context menus
+- **Quick Commands** - Easy access to all features
+- **Cmd+Shift+A** - Accept AI suggestion
+- **Cmd+Shift+R** - Reject AI suggestion
+
 ### ⚙️ Configuration
-- **Database selection** - Choose database file with file picker
-- **Settings validation** - Verify configuration and service availability
-- **Context menus** - Right-click access to features
-- **Error handling** - Error management and notifications
+- **Model Selection** - Choose from available Ollama models
+- **Database Management** - Configure SQLite database path
+- **Service Testing** - Check Ollama service availability
+- **Settings Integration** - VSCode settings UI
 
 ---
 
@@ -28,16 +34,16 @@ VSCode extension foundation for AI code assistance. Monitors file changes and ca
 
 ### ✅ Completed
 - [x] **AI service integration** - Ollama connection and model selection
+- [x] **Auto completion provider** - VSCode completion item provider implementation
 - [x] **Command system** - Right-click menus and command palette integration
 - [x] **Configuration management** - Settings and database path selection
 - [x] **Context capture** - File monitoring and cursor position tracking
 - [x] **Diagnostics integration** - VSCode error and warning detection
+- [x] **Inline suggestions display** - Ghost text showing AI suggestions
 
 ### 📋 Planned
 
 #### 🚀 Core Completion Features
-- [ ] **Auto completion provider** - VSCode completion item provider implementation
-- [ ] **Inline suggestions display** - Ghost text showing AI suggestions
 - [ ] **Intelligent suggestions** - Context-aware code recommendations
 - [ ] **Multi-line edits** - AI suggests multiple code changes simultaneously
 
