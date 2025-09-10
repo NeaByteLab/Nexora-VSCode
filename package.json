@@ -128,10 +128,10 @@
     "vscode:prepublish": "npm run build",
     "watch": "tsc -watch -p ./",
     "build": "rm .tsbuildinfo && tsc && tsc-alias -f -fe .js",
-    "lint": "eslint src/**/**/**/*.ts",
-    "lint:fix": "eslint src/**/**/**/*.ts --fix",
-    "format": "prettier --write src/**/**/**/*.ts",
-    "format:check": "prettier --check src/**/**/**/*.ts"
+    "lint": "eslint src/**/**/**/**/*.ts",
+    "lint:fix": "eslint src/**/**/**/**/*.ts --fix",
+    "format": "prettier --write src/**/**/**/**/*.ts",
+    "format:check": "prettier --check src/**/**/**/**/*.ts"
   },
   "devDependencies": {
     "@types/node": "^24.3.1",

@@ -58,7 +58,7 @@ export default class CodeActionLint implements vscode.CodeActionProvider {
     range: vscode.Range | vscode.Selection,
     context: vscode.CodeActionContext,
     token: vscode.CancellationToken
-  ): Promise<vscode.CodeAction[] | undefined> {
+  ): Promise<vscode.CodeAction[]> {
     if (token.isCancellationRequested || context.diagnostics.length === 0 || this.lintOngoing) {
       return []
     }

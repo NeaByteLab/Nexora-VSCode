@@ -16,8 +16,6 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
   private readonly statusBarItem: StatusBarItem
   /** Ongoing AI generation request */
   private ollamaOngoing: Promise<GenerationResult | null> | null = null
-  /** Displayed completion */
-  private ollamaOnreview: boolean = false
 
   /**
    * Initializes a new InlineCompletionProvider instance
@@ -36,14 +34,14 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
   private setupEventListeners(context: vscode.ExtensionContext): void {
     const selectionChangeDisposable: vscode.Disposable =
       vscode.window.onDidChangeTextEditorSelection(() => {
-        if (this.ollamaOnreview) {
-          this.ollamaOnreview = false
+        if (this.ollamaOngoing) {
+          this.ollamaOngoing = null
         }
       })
     const documentChangeDisposable: vscode.Disposable = vscode.workspace.onDidChangeTextDocument(
       (event: vscode.TextDocumentChangeEvent) => {
-        if (event.contentChanges.length > 0 && this.ollamaOnreview) {
-          this.ollamaOnreview = false
+        if (event.contentChanges.length > 0 && this.ollamaOngoing) {
+          this.ollamaOngoing = null
         }
       }
     )
@@ -77,15 +75,21 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
       if (!completionResult || token.isCancellationRequested) {
         return null
       }
+      console.log(
+        '[DEBUG] provideInlineCompletionItems @ completionResult:\n',
+        JSON.stringify(completionResult, null, 2)
+      )
       this.statusBarItem.show(`$(lightbulb) ${configSection}: ${completionResult.title}`)
+      const completionText: string | vscode.SnippetString =
+        typeof completionResult.content === 'string'
+          ? completionResult.content
+          : new vscode.SnippetString(completionResult.content)
       const completionRange: vscode.Range = new vscode.Range(
         new vscode.Position(completionResult.lineStart - 1, completionResult.charStart),
         new vscode.Position(completionResult.lineEnd - 1, completionResult.charEnd)
       )
       const completionItem: vscode.InlineCompletionItem = new vscode.InlineCompletionItem(
-        typeof completionResult.content === 'string'
-          ? completionResult.content
-          : new vscode.SnippetString(completionResult.content),
+        completionText,
         completionRange,
         {
           title: 'Accept suggestion',
@@ -93,7 +97,6 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
           arguments: [document.uri, completionRange, 'completion']
         }
       )
-      this.ollamaOnreview = true
       return [completionItem]
     } catch (error: unknown) {
       ErrorHandler.handle(error, 'provideInlineCompletionItems', false)
