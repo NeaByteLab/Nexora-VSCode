@@ -21,3 +21,9 @@ export * from '@interfaces/Context'
  * @description Re-exports Myers diff algorithm related interfaces
  */
 export * from '@interfaces/MyersDiff'
+
+/**
+ * Response interfaces
+ * @description Re-exports response interfaces
+ */
+export * from '@interfaces/Response'

@@ -88,6 +88,10 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
         new vscode.Position(completionResult.lineStart - 1, completionResult.charStart),
         new vscode.Position(completionResult.lineEnd - 1, completionResult.charEnd)
       )
+      console.log(
+        '[DEBUG] provideInlineCompletionItems @ document:\n',
+        JSON.stringify(document, null, 2)
+      )
       const completionItem: vscode.InlineCompletionItem = new vscode.InlineCompletionItem(
         completionText,
         completionRange,
