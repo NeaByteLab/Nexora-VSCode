@@ -74,37 +74,38 @@ class GhostTextManager {
     document: vscode.TextDocument,
     newPosition: vscode.Position
   ): boolean {
-    if (!this.expectedGhostText) {
-      return false
-    }
-    if (this.expectedGhostText.documentUri !== document.uri.toString()) {
-      return false
-    }
-    if (document.version <= this.expectedGhostText.documentVersion) {
-      return false
-    }
-    const expectedEndPos: vscode.Position = new vscode.Position(
-      this.expectedGhostText.lineEnd,
-      this.expectedGhostText.charEnd
-    )
-    if (newPosition.isEqual(expectedEndPos)) {
-      const startPos: vscode.Position = new vscode.Position(
-        this.expectedGhostText.lineStart,
-        this.expectedGhostText.charStart
+    try {
+      if (!this.expectedGhostText) {
+        return false
+      }
+      if (this.expectedGhostText.documentUri !== document.uri.toString()) {
+        return false
+      }
+      if (document.version <= this.expectedGhostText.documentVersion) {
+        return false
+      }
+      const expectedEndPos: vscode.Position = new vscode.Position(
+        this.expectedGhostText.lineEnd,
+        this.expectedGhostText.charEnd
       )
-      const expectedText: string = this.expectedGhostText.content
-      try {
+      if (newPosition.isEqual(expectedEndPos)) {
+        const startPos: vscode.Position = new vscode.Position(
+          this.expectedGhostText.lineStart,
+          this.expectedGhostText.charStart
+        )
+        const expectedText: string = this.expectedGhostText.content
         const actualRange: vscode.Range = new vscode.Range(startPos, expectedEndPos)
         const actualText: string = document.getText(actualRange)
         if (actualText === expectedText) {
           this.expectedGhostText = null
           return true
         }
-      } catch (error: unknown) {
-        ErrorHandler.handle(error, 'checkGhostTextWasAccepted', false, 'error')
       }
+      return false
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, 'checkGhostTextWasAccepted', false, 'error')
+      return false
     }
-    return false
   }
 }
 

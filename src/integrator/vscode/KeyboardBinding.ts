@@ -101,7 +101,7 @@ export default class KeyboardBinding {
         throw new Error('Invalid completion type')
       }
     } catch (error: unknown) {
-      ErrorHandler.handle(error, 'appliedCompletion', false)
+      ErrorHandler.handle(error, 'appliedCompletion', false, 'error')
     }
   }
 }

@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import { GenerationResult } from '@interfaces/index'
 import { requestLintFix } from '@integrator/index'
 import { OllamaService } from '@services/index'
+import { ErrorHandler } from '@utils/index'
 
 /**
  * Provides code actions for linting functionality in VS Code.
@@ -59,49 +60,54 @@ export default class CodeActionLint implements vscode.CodeActionProvider {
     context: vscode.CodeActionContext,
     token: vscode.CancellationToken
   ): Promise<vscode.CodeAction[]> {
-    if (token.isCancellationRequested || context.diagnostics.length === 0 || this.lintOngoing) {
+    try {
+      if (token.isCancellationRequested || context.diagnostics.length === 0 || this.lintOngoing) {
+        return []
+      }
+      const codeActions: vscode.CodeAction[] = []
+      const userLine: number = range.start.line
+      const relevantDiagnostics: vscode.Diagnostic[] = this.getDiagnosticsByNearPosition(
+        [...context.diagnostics],
+        userLine,
+        3
+      )
+      for (const diagnostic of relevantDiagnostics) {
+        const lintFixAction: vscode.CodeAction = new vscode.CodeAction(
+          `Fix: ${diagnostic.message}`,
+          vscode.CodeActionKind.QuickFix
+        )
+        lintFixAction.diagnostics = [diagnostic]
+        lintFixAction.edit = new vscode.WorkspaceEdit()
+        const diagnosticRules: string =
+          typeof diagnostic.code === 'string' || typeof diagnostic.code === 'number'
+            ? `${diagnostic.code}`
+            : ''
+        const diagnosticContext: string = `${diagnostic.message} ${diagnostic.source}(${diagnosticRules}) [Ln: ${diagnostic.range.start.line}, Col: ${diagnostic.range.start.character}]`
+        const diagnosticResult: GenerationResult | null = await requestLintFix(
+          document,
+          new vscode.Position(range.start.line, range.start.character),
+          this.ollamaService,
+          diagnosticContext
+        )
+        if (diagnosticResult) {
+          const replaceRange: vscode.Range = new vscode.Range(
+            new vscode.Position(diagnosticResult.lineStart - 1, diagnosticResult.charStart),
+            new vscode.Position(diagnosticResult.lineEnd - 1, diagnosticResult.charEnd)
+          )
+          lintFixAction.edit?.replace(document.uri, replaceRange, diagnosticResult.content)
+        }
+        codeActions.push(lintFixAction)
+        if (token.isCancellationRequested) {
+          this.lintOngoing = false
+          return codeActions
+        }
+      }
+      this.lintOngoing = false
+      return codeActions
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, 'provideCodeActions', false, 'error')
       return []
     }
-    const codeActions: vscode.CodeAction[] = []
-    const userLine: number = range.start.line
-    const relevantDiagnostics: vscode.Diagnostic[] = this.getDiagnosticsByNearPosition(
-      [...context.diagnostics],
-      userLine,
-      3
-    )
-    for (const diagnostic of relevantDiagnostics) {
-      const lintFixAction: vscode.CodeAction = new vscode.CodeAction(
-        `Fix: ${diagnostic.message}`,
-        vscode.CodeActionKind.QuickFix
-      )
-      lintFixAction.diagnostics = [diagnostic]
-      lintFixAction.edit = new vscode.WorkspaceEdit()
-      const diagnosticRules: string =
-        typeof diagnostic.code === 'string' || typeof diagnostic.code === 'number'
-          ? `${diagnostic.code}`
-          : ''
-      const diagnosticContext: string = `${diagnostic.message} ${diagnostic.source}(${diagnosticRules}) [Ln: ${diagnostic.range.start.line}, Col: ${diagnostic.range.start.character}]`
-      const diagnosticResult: GenerationResult | null = await requestLintFix(
-        document,
-        new vscode.Position(range.start.line, range.start.character),
-        this.ollamaService,
-        diagnosticContext
-      )
-      if (diagnosticResult) {
-        const replaceRange: vscode.Range = new vscode.Range(
-          new vscode.Position(diagnosticResult.lineStart - 1, diagnosticResult.charStart),
-          new vscode.Position(diagnosticResult.lineEnd - 1, diagnosticResult.charEnd)
-        )
-        lintFixAction.edit?.replace(document.uri, replaceRange, diagnosticResult.content)
-      }
-      codeActions.push(lintFixAction)
-      if (token.isCancellationRequested) {
-        this.lintOngoing = false
-        return codeActions
-      }
-    }
-    this.lintOngoing = false
-    return codeActions
   }
 
   /**
@@ -116,28 +122,33 @@ export default class CodeActionLint implements vscode.CodeActionProvider {
     userLine: number,
     limit: number
   ): vscode.Diagnostic[] {
-    const diagnosticsWithDistance: Array<{ diagnostic: vscode.Diagnostic; distance: number }> =
-      diagnostics.map((diagnostic: vscode.Diagnostic) => ({
-        diagnostic,
-        distance: Math.abs(diagnostic.range.start.line - userLine)
-      }))
-    diagnosticsWithDistance.sort(
-      (
-        a: { diagnostic: vscode.Diagnostic; distance: number },
-        b: { diagnostic: vscode.Diagnostic; distance: number }
-      ) => {
-        if (a.distance !== b.distance) {
-          return a.distance - b.distance
+    try {
+      const diagnosticsWithDistance: Array<{ diagnostic: vscode.Diagnostic; distance: number }> =
+        diagnostics.map((diagnostic: vscode.Diagnostic) => ({
+          diagnostic,
+          distance: Math.abs(diagnostic.range.start.line - userLine)
+        }))
+      diagnosticsWithDistance.sort(
+        (
+          a: { diagnostic: vscode.Diagnostic; distance: number },
+          b: { diagnostic: vscode.Diagnostic; distance: number }
+        ) => {
+          if (a.distance !== b.distance) {
+            return a.distance - b.distance
+          }
+          return (
+            this.getSeverityPriority(b.diagnostic.severity) -
+            this.getSeverityPriority(a.diagnostic.severity)
+          )
         }
-        return (
-          this.getSeverityPriority(b.diagnostic.severity) -
-          this.getSeverityPriority(a.diagnostic.severity)
-        )
-      }
-    )
-    return diagnosticsWithDistance
-      .slice(0, limit)
-      .map((item: { diagnostic: vscode.Diagnostic; distance: number }) => item.diagnostic)
+      )
+      return diagnosticsWithDistance
+        .slice(0, limit)
+        .map((item: { diagnostic: vscode.Diagnostic; distance: number }) => item.diagnostic)
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, 'getDiagnosticsByNearPosition', false, 'error')
+      return []
+    }
   }
 
   /**

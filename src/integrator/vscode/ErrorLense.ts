@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { ErrorHandler } from '@utils/index'
 
 /**
  * ErrorLense class for displaying diagnostics with visual enhancements
@@ -96,8 +97,8 @@ export default class ErrorLense {
         documentChangeDisposable,
         diagnosticChangeDisposable
       )
-    } catch {
-      // Ignore
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, 'error lens initialize', false, 'error')
     }
   }
 
@@ -175,8 +176,8 @@ export default class ErrorLense {
       editor.setDecorations(this.warningLineDecoration, warningRanges)
       editor.setDecorations(this.infoLineDecoration, infoRanges)
       editor.setDecorations(this.diagnosticTextDecoration, textDecorations)
-    } catch {
-      // Ignore
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, 'error lens update decorations', false, 'error')
     }
   }
 

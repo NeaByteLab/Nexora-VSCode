@@ -103,7 +103,7 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
       )
       return [completionItem]
     } catch (error: unknown) {
-      ErrorHandler.handle(error, 'provideInlineCompletionItems', false)
+      ErrorHandler.handle(error, 'provideInlineCompletionItems', false, 'error')
       return null
     } finally {
       this.ollamaOngoing = null
@@ -122,18 +122,23 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
     context: vscode.InlineCompletionContext,
     token: vscode.CancellationToken
   ): void | null {
-    const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
-    if (!activeEditor || activeEditor.document.fileName !== document.fileName) {
-      return null
-    }
-    if (
-      context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic &&
-      vscode.window.activeTextEditor &&
-      !vscode.window.activeTextEditor.selection.isEmpty
-    ) {
-      return null
-    }
-    if (token.isCancellationRequested || this.ollamaOngoing) {
+    try {
+      const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
+      if (!activeEditor || activeEditor.document.fileName !== document.fileName) {
+        return null
+      }
+      if (
+        context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic &&
+        vscode.window.activeTextEditor &&
+        !vscode.window.activeTextEditor.selection.isEmpty
+      ) {
+        return null
+      }
+      if (token.isCancellationRequested || this.ollamaOngoing) {
+        return null
+      }
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, 'handleSessionCompletion', false, 'error')
       return null
     }
   }

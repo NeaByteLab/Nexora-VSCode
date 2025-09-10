@@ -33,7 +33,7 @@ export async function requestOllama(
     }
     return null
   } catch (error: unknown) {
-    ErrorHandler.handle(error, 'requestOllama', false)
+    ErrorHandler.handle(error, 'requestOllama', false, 'error')
     return null
   }
 }
@@ -62,7 +62,7 @@ export async function requestInlineCompletion(
     )
     return result
   } catch (error: unknown) {
-    ErrorHandler.handle(error, 'requestInlineCompletion', false)
+    ErrorHandler.handle(error, 'requestInlineCompletion', false, 'error')
     return null
   } finally {
     statusBarItem?.hide()
@@ -93,7 +93,7 @@ export async function requestLintFix(
     )
     return result
   } catch (error: unknown) {
-    ErrorHandler.handle(error, 'requestLintFix', false)
+    ErrorHandler.handle(error, 'requestLintFix', false, 'error')
     return null
   }
 }

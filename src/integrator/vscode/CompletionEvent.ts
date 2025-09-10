@@ -51,7 +51,7 @@ export default class CompletionEvent {
         )
       this.context.subscriptions.push(completionDisposable, codeActionDisposable)
     } catch (error: unknown) {
-      ErrorHandler.handle(error, 'completion listener initialization', true, 'error')
+      ErrorHandler.handle(error, 'completion event listener initialization', true, 'error')
     }
   }
 }
