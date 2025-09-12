@@ -28,8 +28,6 @@ export interface ChatRequest {
 export interface GenerationResult {
   /** Type of the generation */
   type: string
-  /** Line index of the generation */
-  lineIndex: number
   /** Old content of the generation */
   oldContent: string
   /** New content of the generation */

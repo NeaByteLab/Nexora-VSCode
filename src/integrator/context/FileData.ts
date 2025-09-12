@@ -3,8 +3,7 @@ import { FileContextData } from '@interfaces/index'
 
 /**
  * Extracts file and cursor context data from a text document.
- * Returns file information and text selection details.
- *
+ * @description Analyzes a text document and extracts comprehensive context information including file metadata and cursor position details
  * @param document - The text document to analyze
  * @param position - The cursor position within the document
  * @returns Object containing file metadata and selected text context

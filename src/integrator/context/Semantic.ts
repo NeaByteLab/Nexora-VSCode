@@ -9,7 +9,7 @@ import { SemanticSegment } from '@interfaces/index'
 export default class SemanticToken {
   /**
    * Retrieves semantic tokens for the entire document.
-   *
+   * @description Gets semantic highlighting information for the complete document
    * @param editor - The text editor containing the document
    * @returns Promise that resolves to semantic tokens for the full document
    */
@@ -24,7 +24,7 @@ export default class SemanticToken {
 
   /**
    * Retrieves semantic tokens for a specific range within the document.
-   *
+   * @description Gets semantic highlighting information for a selected text range
    * @param editor - The text editor containing the document
    * @param selection - The range of text to get semantic tokens for
    * @returns Promise that resolves to semantic tokens for the specified range
@@ -42,7 +42,7 @@ export default class SemanticToken {
 
   /**
    * Formats semantic tokens into a readable string representation.
-   *
+   * @description Converts semantic token data into a human-readable format
    * @param tokens - Array of semantic token segments to format
    * @returns Formatted string with token information
    */
@@ -60,7 +60,7 @@ export default class SemanticToken {
 
   /**
    * Decodes semantic tokens data into readable format with text and metadata.
-   *
+   * @description Converts raw semantic token data into structured objects with text and position information
    * @param tokens - The semantic tokens to decode
    * @param document - The document containing the tokens
    * @returns Array of decoded token objects
@@ -80,7 +80,11 @@ export default class SemanticToken {
       const tokenType: number = data[i + 3] ?? 0
       const tokenModifiers: number = data[i + 4] ?? 0
       line += deltaLine
-      character = deltaLine === 0 ? character + deltaCharacter : (deltaCharacter ?? 0)
+      if (deltaLine === 0) {
+        character += deltaCharacter
+      } else {
+        character = deltaCharacter ?? 0
+      }
       const startPos: vscode.Position = new vscode.Position(line, character ?? 0)
       const endPos: vscode.Position = new vscode.Position(line, character + length)
       const range: vscode.Range = new vscode.Range(startPos, endPos)
@@ -97,7 +101,7 @@ export default class SemanticToken {
 
   /**
    * Converts token type index to readable name.
-   *
+   * @description Maps numeric token type indices to their corresponding string names
    * @param tokenType - Numeric index of the token type
    * @returns String name of the token type
    */
@@ -132,7 +136,7 @@ export default class SemanticToken {
 
   /**
    * Converts token modifiers bitmask to array of modifier names.
-   *
+   * @description Converts a bitmask value into an array of modifier names
    * @param tokenModifiers - Bitmask representing active modifiers
    * @returns Array of modifier names
    */

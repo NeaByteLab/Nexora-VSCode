@@ -31,9 +31,9 @@ export default class StatusBarItem {
 
   /**
    * Shows a message in the status bar.
+   * @description Displays the provided text in the status bar with optional tooltip
    * @param text - The text to display in the status bar
    * @param tooltip - Optional tooltip text to show on hover
-   * @description Displays the provided text in the status bar with optional tooltip
    */
   public show(text: string, tooltip?: string): void {
     if (this.statusBarItem) {

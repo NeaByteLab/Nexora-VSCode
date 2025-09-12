@@ -36,62 +36,79 @@ class ContextBuilder {
 # Guidelines
 - Selected position is where the user is, you can edit or add code before or after the selected position
 - If you want to edit or add the code, make sure not to duplicate the existing code
-- Line index must be the line number where the code should be added or edited
-- Type 'edit' will indicate that you should edit the existing code (existing code exists or for improvement)
-- Type 'add' will indicate that you should add the new code (new code does not exist in the file)
-- If type 'add' you can keep 'oldContent' using 'none' value
-- If type 'edit' you must provide the 'oldContent' and 'newContent'
-- If nothing to change please set value type to 'none'
-- Don't add existing code to 'newContent', just set type to 'none' if nothing to change
 
-## Example with type 'edit'
+# Operation Types & Rules
+- **ADD**: Add new code that doesn't exist in the file
+  - Should add code after the selected position
+  - oldContent: ""
+  - newContent: "new code to add"
+  
+- **EDIT**: Modify existing code in the file
+  - oldContent: "existing code to replace"
+  - newContent: "modified code"
+  
+- **DELETE**: Remove existing code from the file
+  - oldContent: "existing code to remove"
+  - newContent: ""
+  
+- **NONE**: No changes needed
+  - Should not change the code
+  - oldContent: ""
+  - newContent: ""
+
+## Example For Edit Content
 {
   "type": "edit",
-  "lineIndex": 1,
   "oldContent": "console.log('Hello, world!');",
   "newContent": "console.log('Hello, world! This is a test.');",
   "title": "Improve code readability"
 }
-## Other example with type 'edit'
+## Other Example For Edit Content
 {
   "type": "edit",
-  "lineIndex": 10,
   "oldContent": "console.l);",
   "newContent": "console.log('Hello, world!');",
   "title": "Fix syntax error in the code"
 }
 
-## Example with type 'add'
+## Example For Add Content
+- Should add code after the selected position (not support previous line add)
 {
   "type": "add",
-  "lineIndex": 1,
-  "oldContent": "none",
+  "oldContent": "",
   "newContent": "console.log('Hello, world! This is a test.');",
   "title": "Add code to improve readability"
 }
 
-## Example with type 'none'
+## Example For Delete Content
+{
+  "type": "delete",
+  "oldContent": "console.log('Hello, world!');",
+  "newContent": "",
+  "title": "Improve code readability"
+}
+
+## Example For No Change Content
 {
   "type": "none",
-  "lineIndex": 1,
-  "oldContent": "none",
-  "newContent": "none",
+  "oldContent": "",
+  "newContent": "",
   "title": "No change needed"
 }
 
 # IMPORTANT: Response Format
-- You must respond with valid JSON in the following format
-- Type must be one of the following: 'add', 'edit', 'none'
-- You should truncate the code by nearest selected line number if the code is too long
-- No markdown code blocks or formatting when returning the code
+- You MUST respond with valid JSON only - no other text or comments
+- Type must be one of: 'add', 'edit', 'delete', or 'none'
+- Truncate code by nearest selected line if too long
+- Edit code nearest to selected position for accuracy & efficiency
+- No markdown code blocks or extra formatting when returning the code
 
-You must respond with valid JSON in the following format:
+# Required JSON Format:
 {
-  "type": "add" | "edit" | "none",
-  "lineIndex": number,
+  "type": "add" | "edit" | "delete" | "none",
   "oldContent": string,
   "newContent": string,
-  "title": "string"
+  "title": string
 }
 `.trim()
   }

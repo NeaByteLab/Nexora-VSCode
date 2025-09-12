@@ -7,10 +7,11 @@ import { generationSchema, generationFormat } from '@schemas/index'
 import { LogHandler } from '@utils/index'
 
 /**
- * Requests code generation from the code generation service.
+ * Requests code generation from the text generation service.
+ * @description Sends a request to the text generation service and parses the response into a structured format
  * @param context - The context string for code generation
  * @param format - The format object for the request
- * @param ollamaService - The code generation service instance
+ * @param ollamaService - The text generation service instance
  * @param type - The type of completion to generate
  * @returns Promise resolving to generation result or null if parsing fails
  */
@@ -39,10 +40,11 @@ export async function requestOllama(
 }
 
 /**
- * Generates code completion suggestions using code generation service
+ * Generates code completion suggestions using text generation service.
+ * @description Creates inline code completion suggestions based on document context and cursor position
  * @param document - The text document where completion is requested
  * @param position - The cursor position in the document
- * @param ollamaService - Service instance for code generation communication
+ * @param ollamaService - Service instance for text generation communication
  * @returns Promise resolving to generation result or null if generation fails
  */
 export async function requestInlineCompletion(
@@ -66,10 +68,11 @@ export async function requestInlineCompletion(
 }
 
 /**
- * Generates lint fix suggestions using code generation service.
+ * Generates lint fix suggestions using text generation service.
+ * @description Creates code suggestions to fix linting issues in the document
  * @param document - The text document where lint fix is requested
  * @param position - The cursor position in the document
- * @param ollamaService - Service instance for code generation communication
+ * @param ollamaService - Service instance for text generation communication
  * @param lintIssue - The lint issue description to fix
  * @returns Promise resolving to generation result or null if generation fails
  */

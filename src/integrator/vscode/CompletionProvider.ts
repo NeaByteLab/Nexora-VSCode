@@ -12,7 +12,8 @@ import { LogHandler } from '@utils/index'
 
 /**
  * Manages inline code suggestions using the editor's InlineCompletionItemProvider.
- * @description Provides inline suggestions with keyboard shortcuts for code completion
+ * @description Provides inline suggestions with keyboard shortcuts for code completion.
+ * Only handles 'add' operations - other operations (edit, delete, none) are managed by CompletionHandler.ts
  */
 export default class CompletionProvider implements vscode.InlineCompletionItemProvider {
   /** Ollama service instance for text generation requests */
@@ -24,7 +25,7 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
 
   /**
    * Initializes a new CompletionProvider instance.
-   * @param context - Extension context for managing subscriptions and lifecycle
+   * @description Creates a new completion provider with service instances
    */
   constructor() {
     this.ollamaService = new OllamaService()
@@ -46,19 +47,22 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
     token: vscode.CancellationToken
   ): Promise<vscode.InlineCompletionItem[]> {
     try {
-      const previousResult: vscode.InlineCompletionItem[] = this.handleSessionCompletion(
+      const previousResult: FileTrackerData | null = this.handleSessionCompletion(
         document,
         context,
         token
       )
-      if (previousResult.length > 0) {
-        return previousResult
+      if (previousResult) {
+        if (previousResult.type === 'add') {
+          return [new vscode.InlineCompletionItem(previousResult.newContent)]
+        }
+        return []
       }
       this.statusBarItem.show('$(loading~spin) Generating Completion...')
       this.ollamaOngoing = requestInlineCompletion(document, position, this.ollamaService)
       const completionResult: GenerationResult | null = await this.ollamaOngoing
       if (!completionResult) {
-        this.statusBarItem.show(`$(close) ${configSection}: Wrong Format`)
+        this.statusBarItem.show(`$(close) ${configSection}: Invalid response format`)
         return []
       }
       this.statusBarItem.show(`$(lightbulb) ${configSection}: ${completionResult.title}`)
@@ -68,11 +72,12 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
       )
       if (fileTrackerData.type === 'add') {
         return [new vscode.InlineCompletionItem(fileTrackerData.newContent)]
-      } else if (fileTrackerData.type === 'edit') {
-        return []
+      } else {
+        vscode.commands.executeCommand('vscode.executeCodeLensProvider', document.uri)
       }
       return []
     } catch (error: unknown) {
+      this.statusBarItem.show(`$(error) ${configSection}: Completion failed`)
       LogHandler.handle(error, 'provideInlineCompletionItems', false, 'error')
       return []
     } finally {
@@ -82,48 +87,47 @@ export default class CompletionProvider implements vscode.InlineCompletionItemPr
 
   /**
    * Validates completion session conditions and determines if completion should proceed.
+   * @description Checks if completion should be triggered based on editor state and existing completion data
    * @param document - The text document where completion is being requested
    * @param context - The completion context containing trigger information
    * @param token - Cancellation token for the completion operation
-   * @returns null if completion should be skipped, undefined if validation passes
+   * @returns File tracker data if completion should proceed, null if should be skipped
    */
   private handleSessionCompletion(
     document: vscode.TextDocument,
     context: vscode.InlineCompletionContext,
     token: vscode.CancellationToken
-  ): vscode.InlineCompletionItem[] {
+  ): FileTrackerData | null {
     try {
       const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
       if (!activeEditor || activeEditor.document.fileName !== document.fileName) {
-        return []
+        return null
       }
       if (
         context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic &&
         vscode.window.activeTextEditor &&
         !vscode.window.activeTextEditor.selection.isEmpty
       ) {
-        return []
+        return null
       }
       if (token.isCancellationRequested || this.ollamaOngoing) {
-        return []
+        return null
       }
       const fileTrackerData: FileTrackerData = FileTracker.getInstance().get(
         document.uri.toString()
       )
       if (fileTrackerData.fileState === 'pending') {
-        if (fileTrackerData.type === 'none' || fileTrackerData.newContent === 'none') {
-          return []
+        if (fileTrackerData.type === 'none') {
+          return null
         }
         this.statusBarItem.show(`$(lightbulb) ${configSection}: ${fileTrackerData.title}`)
-        const itemCompletion: vscode.InlineCompletionItem = new vscode.InlineCompletionItem(
-          fileTrackerData.newContent
-        )
-        return [itemCompletion]
+        return fileTrackerData
       }
-      return []
+      return null
     } catch (error: unknown) {
       LogHandler.handle(error, 'handleSessionCompletion', false, 'error')
-      return []
+      this.statusBarItem.show(`$(error) ${configSection}: Session validation failed`)
+      return null
     }
   }
 }

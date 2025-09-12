@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { vscodeWhitelistExt } from '@constants/index'
-import { CompletionHandler, CompletionProvider, ErrorLense } from '@integrator/index'
+import { CompletionHandler, CompletionProvider } from '@integrator/index'
 import { LogHandler } from '@utils/index'
 
 /**
@@ -58,7 +58,6 @@ export default class CompletionEvent {
           new CompletionProvider()
         )
       )
-      new ErrorLense(this.context).initialize()
     } catch (error: unknown) {
       LogHandler.handle(error, 'completion event listener initialization', true, 'error')
     }
