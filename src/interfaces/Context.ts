@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 
 /**
  * File context data structure for document analysis
- * @description Contains file metadata and cursor position information for context-aware operations
+ * @description Contains file metadata and cursor position information
  */
 export interface FileContextData {
   /** File metadata and properties */
@@ -11,14 +11,12 @@ export interface FileContextData {
     filePath: string
     /** File name including extension */
     fileName: string
-    /** File name without extension */
-    fileNameWithoutExt: string
-    /** File extension without the dot */
-    fileExtension: string
-    /** Language identifier used by the editor */
+    /** Language identifier */
     fileLanguageId: string
     /** Total number of lines in the document */
     fileTotalLines: number
+    /** Complete file content */
+    fileContent: string
     /** Whether the file has unsaved changes */
     fileIsDirty: boolean
   }
@@ -26,9 +24,9 @@ export interface FileContextData {
   selectedData: {
     /** Text content of the line where cursor is positioned */
     selectedLineText: string
-    /** Line number where cursor is positioned (1-based indexing) */
+    /** Line number where cursor is positioned (1-based) */
     selectedLineNumber: number
-    /** Character position within the current line (1-based indexing) */
+    /** Character position within the current line (1-based) */
     selectedCharacterPosition: number
     /** All text content before the cursor position */
     selectedTextBeforeCursor: string
@@ -39,7 +37,7 @@ export interface FileContextData {
 
 /**
  * Represents a semantic token segment with text content and metadata
- * @description Contains the text content, semantic type, modifiers, and range of the token for syntax highlighting
+ * @description Contains the text content, semantic type, modifiers, and range of the token
  */
 export type SemanticSegment = {
   /** The text content of the token */

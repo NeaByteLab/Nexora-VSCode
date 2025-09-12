@@ -1,6 +1,6 @@
 /**
- * Context integration utilities.
- * Re-exports all context builder functions from the context module.
+ * Context integration utilities module.
+ * @description Re-exports all context builder functions and utilities from the context module
  */
 
 export { default as ContextBuilder } from '@integrator/context/Builder'

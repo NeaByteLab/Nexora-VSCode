@@ -2,20 +2,19 @@ import * as vscode from 'vscode'
 import { ConfigManager, isConfigChanged } from '@config/index'
 import { CacheManager } from '@integrator/index'
 import { OllamaService } from '@services/index'
-import { ErrorHandler } from '@utils/index'
+import { LogHandler } from '@utils/index'
 import { configSection } from '@constants/index'
 
-/**
- * Global state variables
- */
+/** Currently selected model name */
 let selectedModel: string = ''
+/** List of available models */
 let listModels: string[] = []
 
 /**
- * Displays model selection interface to users
- * Shows available models and allows selection through quick pick interface
- * Automatically selects first model if none is currently selected
+ * Displays model selection interface to users.
+ * @description Shows available models and allows selection through quick pick interface, automatically selects first model if none is currently selected
  * @param ollamaService - Service instance for retrieving available models
+ * @returns Promise that resolves when model selection is complete
  */
 export default async function (ollamaService: OllamaService): Promise<void> {
   try {
@@ -69,6 +68,6 @@ export default async function (ollamaService: OllamaService): Promise<void> {
       await ConfigManager.setSelectedModel(selectedItem.label)
     }
   } catch (error: unknown) {
-    ErrorHandler.handle(error, 'model selection', true, 'error')
+    LogHandler.handle(error, 'model selection', true, 'error')
   }
 }

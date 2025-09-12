@@ -1,16 +1,16 @@
 import { z } from 'zod'
 import * as vscode from 'vscode'
 import { GenerationResult, CompletionType } from '@interfaces/index'
-import { ContextBuilder, StatusBarItem } from '@integrator/index'
+import { ContextBuilder } from '@integrator/index'
 import { OllamaService } from '@services/index'
 import { generationSchema, generationFormat } from '@schemas/index'
-import { ErrorHandler } from '@utils/index'
+import { LogHandler } from '@utils/index'
 
 /**
- * Requests code generation from Ollama service.
+ * Requests code generation from the code generation service.
  * @param context - The context string for code generation
  * @param format - The format object for the request
- * @param ollamaService - The Ollama service instance
+ * @param ollamaService - The code generation service instance
  * @param type - The type of completion to generate
  * @returns Promise resolving to generation result or null if parsing fails
  */
@@ -33,24 +33,22 @@ export async function requestOllama(
     }
     return null
   } catch (error: unknown) {
-    ErrorHandler.handle(error, 'requestOllama', false, 'error')
+    LogHandler.handle(error, 'requestOllama', false, 'error')
     return null
   }
 }
 
 /**
- * Generates code completion suggestions using AI service
+ * Generates code completion suggestions using code generation service
  * @param document - The text document where completion is requested
  * @param position - The cursor position in the document
- * @param ollamaService - Service instance for AI model communication
- * @param statusBarItem - Status bar item for user feedback
+ * @param ollamaService - Service instance for code generation communication
  * @returns Promise resolving to generation result or null if generation fails
  */
 export async function requestInlineCompletion(
   document: vscode.TextDocument,
   position: vscode.Position,
-  ollamaService: OllamaService,
-  statusBarItem: StatusBarItem
+  ollamaService: OllamaService
 ): Promise<GenerationResult | null> {
   try {
     const context: string = ContextBuilder.getUserPrompt(document, position)
@@ -62,18 +60,16 @@ export async function requestInlineCompletion(
     )
     return result
   } catch (error: unknown) {
-    ErrorHandler.handle(error, 'requestInlineCompletion', false, 'error')
+    LogHandler.handle(error, 'requestInlineCompletion', false, 'error')
     return null
-  } finally {
-    statusBarItem?.hide()
   }
 }
 
 /**
- * Generates lint fix suggestions using AI service.
+ * Generates lint fix suggestions using code generation service.
  * @param document - The text document where lint fix is requested
  * @param position - The cursor position in the document
- * @param ollamaService - Service instance for AI model communication
+ * @param ollamaService - Service instance for code generation communication
  * @param lintIssue - The lint issue description to fix
  * @returns Promise resolving to generation result or null if generation fails
  */
@@ -93,7 +89,7 @@ export async function requestLintFix(
     )
     return result
   } catch (error: unknown) {
-    ErrorHandler.handle(error, 'requestLintFix', false, 'error')
+    LogHandler.handle(error, 'requestLintFix', false, 'error')
     return null
   }
 }

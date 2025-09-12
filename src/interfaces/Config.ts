@@ -1,13 +1,13 @@
 /**
  * Account data structure for user authentication and rate limiting
- * @description Contains user credentials and API usage limits for account management
+ * @description Contains user credentials and API usage limits
  */
 export interface AccountData {
-  /** User email address for account identification */
+  /** User email address */
   email: string
-  /** User password for authentication */
+  /** User password */
   password: string
-  /** API key for service authentication */
+  /** API key for authentication */
   api_key: string
   /** Maximum requests allowed per hour (null indicates no limit) */
   limit_hourly: number | null
@@ -17,13 +17,13 @@ export interface AccountData {
 
 /**
  * Configuration data structure
- * @description Contains application configuration settings for runtime behavior
+ * @description Contains application configuration settings
  */
 export interface ConfigurationData {
-  /** Service host URL for API communication */
+  /** Service host URL */
   urlHost: string
-  /** File path to the SQLite database file */
+  /** File path to the database file */
   databasePath: string
-  /** Name of the currently selected model for text generation */
+  /** Name of the currently selected model */
   selectedModel: string
 }

@@ -1,9 +1,11 @@
 import * as vscode from 'vscode'
 import { LogLevel } from '@interfaces/index'
 import { vscodeSettingsButton } from '@constants/index'
+import { StatusBarItem } from '@integrator/index'
+import { configSection } from '@constants/index'
 
 /**
- * Console method mapping for log level typing
+ * Console method mapping for log level typing.
  */
 const consoleMethods: Record<LogLevel, keyof Console> = {
   error: 'error',
@@ -12,15 +14,15 @@ const consoleMethods: Record<LogLevel, keyof Console> = {
 } as const
 
 /**
- * Centralized error handling utility
- * Provides consistent error handling, logging, and user notifications
+ * Centralized error handling utility.
+ * Provides consistent error handling, logging, and user notifications.
  */
-export default class ErrorHandler {
+export default class LogHandler {
   /** Default message for unknown errors */
   private static readonly UNKNOWN_ERROR_MESSAGE: string = 'An unknown error occurred'
 
   /**
-   * Handles errors with consistent logging and user notification
+   * Handles errors with consistent logging and user notification.
    * @param error - The error to handle
    * @param context - Context description for better error tracking
    * @param showToUser - Whether to show error message to user (default: true)
@@ -37,10 +39,11 @@ export default class ErrorHandler {
     if (showToUser) {
       this.showNotification(errorMessage, logLevel, true)
     }
+    StatusBarItem.getInstance().show(`$(${logLevel}) ${configSection}: ${logLevel}`)
   }
 
   /**
-   * Handles async operations with error catching
+   * Handles async operations with error catching.
    * @param operation - The async operation to execute
    * @param context - Context description for error tracking
    * @param showToUser - Whether to show error message to user (default: true)
@@ -60,7 +63,21 @@ export default class ErrorHandler {
   }
 
   /**
-   * Handles database operation errors
+   * Handles accept warning.
+   * @param error - The accept warning
+   * @param context - The context of the accept warning
+   */
+  public static handleAcceptWarning(): void {
+    this.handle(
+      'This is not a valid change, please accept the change using the TAB key or click the ACCEPT button.',
+      'Due limitations of the inline suggestion feature',
+      true,
+      'warning'
+    )
+  }
+
+  /**
+   * Handles database operation errors.
    * @param error - The database error
    * @param operation - Description of the database operation
    */
@@ -69,7 +86,7 @@ export default class ErrorHandler {
   }
 
   /**
-   * Handles API service errors
+   * Handles API service errors.
    * @param error - The API service error
    * @param operation - Description of the API operation
    */
@@ -78,7 +95,7 @@ export default class ErrorHandler {
   }
 
   /**
-   * Handles configuration errors
+   * Handles configuration errors.
    * @param error - The configuration error
    * @param setting - The configuration setting that failed
    */
@@ -87,7 +104,7 @@ export default class ErrorHandler {
   }
 
   /**
-   * Handles validation errors
+   * Handles validation errors.
    * @param error - The validation error
    * @param field - The field that failed validation
    */
@@ -96,7 +113,7 @@ export default class ErrorHandler {
   }
 
   /**
-   * Extracts error message from unknown error type
+   * Extracts error message from unknown error type.
    * @param error - The error to extract message from
    * @returns Formatted error message
    */
@@ -114,7 +131,7 @@ export default class ErrorHandler {
   }
 
   /**
-   * Logs error to output channel
+   * Logs error to output channel.
    * @param message - Error message to log
    * @param context - Context information
    * @param level - Log level
@@ -136,7 +153,7 @@ export default class ErrorHandler {
   }
 
   /**
-   * Shows user notification based on error level
+   * Shows user notification based on error level.
    * @param message - Error message to show
    * @param level - Error level
    * @param openConfig - Whether to show settings button (default: false)
@@ -160,46 +177,6 @@ export default class ErrorHandler {
       case 'info':
         vscode.window.showInformationMessage(message)
         break
-    }
-  }
-
-  /**
-   * Creates a safe async function wrapper
-   * @param fn - Function to wrap
-   * @param context - Context for error handling
-   * @returns Wrapped function with error handling
-   */
-  public static wrapAsync<T extends unknown[], R>(
-    fn: (...args: T) => Promise<R>,
-    context: string
-  ): (...args: T) => Promise<R | null> {
-    return async (...args: T): Promise<R | null> => {
-      try {
-        return await fn(...args)
-      } catch (error: unknown) {
-        this.handle(error, context)
-        return null
-      }
-    }
-  }
-
-  /**
-   * Creates a safe sync function wrapper
-   * @param fn - Function to wrap
-   * @param context - Context for error handling
-   * @returns Wrapped function with error handling
-   */
-  public static wrapSync<T extends unknown[], R>(
-    fn: (...args: T) => R,
-    context: string
-  ): (...args: T) => R | null {
-    return (...args: T): R | null => {
-      try {
-        return fn(...args)
-      } catch (error: unknown) {
-        this.handle(error, context)
-        return null
-      }
     }
   }
 }

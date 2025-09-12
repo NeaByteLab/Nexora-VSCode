@@ -1,11 +1,11 @@
 import * as vscode from 'vscode'
 import { ConfigManager } from '@config/index'
-import { ErrorHandler } from '@utils/index'
+import { LogHandler } from '@utils/index'
 
 /**
- * Opens a file picker dialog to allow the user to select a database file
- * Updates the extension configuration with the selected database path
- * Displays confirmation message when database path is successfully set
+ * Opens a file picker dialog to allow the user to select a database file.
+ * @description Updates the extension configuration with the selected database path and displays confirmation message
+ * @returns Promise that resolves when database selection is complete
  */
 export default async function (): Promise<void> {
   try {
@@ -22,9 +22,9 @@ export default async function (): Promise<void> {
     if (fileUri?.[0]) {
       const selectedPath: string = fileUri[0].fsPath
       await ConfigManager.setDatabasePath(selectedPath)
-      ErrorHandler.showNotification(`Database path set to: ${selectedPath}`, 'info')
+      LogHandler.showNotification(`Database path set to: ${selectedPath}`, 'info')
     }
   } catch (error: unknown) {
-    ErrorHandler.handle(error, 'database selection', true, 'error')
+    LogHandler.handle(error, 'database selection', true, 'error')
   }
 }

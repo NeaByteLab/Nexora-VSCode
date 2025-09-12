@@ -2,17 +2,18 @@ import * as path from 'path'
 import * as fs from 'fs'
 
 /**
- * Validation utility class
- * Provides common validation methods
+ * Validation utility class.
+ * @description Provides common validation methods for URLs and file paths
  */
 export default class Validator {
   /** Valid service domains for URL validation */
   private static readonly SERVICE_DOMAINS: string[] = ['ollama.com', 'www.ollama.com']
 
   /**
-   * Checks if a string is a valid service URL
+   * Checks if a string is a valid service URL.
    * @param url - URL string to validate
    * @returns True if the URL is valid, false otherwise
+   * @description Validates URL format and checks if it matches allowed service domains
    */
   public static isOllamaUrl(url: string): boolean {
     if (!url || typeof url !== 'string') {
@@ -31,9 +32,10 @@ export default class Validator {
   }
 
   /**
-   * Checks if a string is a valid database path
+   * Checks if a string is a valid database path.
    * @param dbPath - Database path string to validate
    * @returns True if the path is valid, false otherwise
+   * @description Validates file path format and checks if the directory exists
    */
   public static isValidPath(dbPath: string): boolean {
     if (!dbPath || typeof dbPath !== 'string') {

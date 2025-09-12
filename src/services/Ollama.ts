@@ -2,10 +2,10 @@ import { Ollama, ChatResponse } from 'ollama'
 import { ChatRequest, AccountData, CompletionResult, CompletionType } from '@interfaces/index'
 import { ContextBuilder } from '@integrator/index'
 import { KnexManager, ConfigManager } from '@config/index'
-import { ErrorHandler, Validator } from '@utils/index'
+import { LogHandler, Validator } from '@utils/index'
 
 /**
- * Service for AI model communication
+ * Service for AI model communication.
  * @description Handles interactions with local or remote model services for code generation and completion
  */
 export default class OllamaService {
@@ -29,7 +29,7 @@ export default class OllamaService {
   private ollama: Ollama
 
   /**
-   * Initializes the service instance
+   * Initializes the service instance.
    * @description Configures the service and sets up configuration change listeners
    */
   constructor() {
@@ -46,36 +46,36 @@ export default class OllamaService {
   }
 
   /**
-   * Processes service errors and provides user-friendly messages
+   * Processes service errors and provides user-friendly messages.
    * @description Handles different types of connection and timeout errors with appropriate user feedback
    * @param error - The error object to process
    */
   private handleError(error: unknown): void {
     if (error instanceof Error) {
       if (error.message.includes('fetch failed') || error.message.includes('ECONNREFUSED')) {
-        ErrorHandler.handleOllamaError(
+        LogHandler.handleOllamaError(
           new Error(
             `${OllamaService.CONNECTION_ERROR_MESSAGE} ${this.urlHost}. ${OllamaService.CONNECTION_HELP_MESSAGE}`
           ),
           OllamaService.FETCHING_MODELS_CONTEXT
         )
       } else if (error.message.includes('timeout')) {
-        ErrorHandler.handleOllamaError(
+        LogHandler.handleOllamaError(
           new Error(
             `${OllamaService.TIMEOUT_ERROR_MESSAGE} ${this.urlHost}. ${OllamaService.TIMEOUT_HELP_MESSAGE}`
           ),
           OllamaService.FETCHING_MODELS_CONTEXT
         )
       } else {
-        ErrorHandler.handleOllamaError(error, OllamaService.FETCHING_MODELS_CONTEXT)
+        LogHandler.handleOllamaError(error, OllamaService.FETCHING_MODELS_CONTEXT)
       }
     } else {
-      ErrorHandler.handleOllamaError(error, OllamaService.FETCHING_MODELS_CONTEXT)
+      LogHandler.handleOllamaError(error, OllamaService.FETCHING_MODELS_CONTEXT)
     }
   }
 
   /**
-   * Retrieves available models from the service
+   * Retrieves available models from the service.
    * @description Fetches the list of available models from the configured service endpoint
    * @returns Promise that resolves to an array of model names
    */
@@ -90,7 +90,7 @@ export default class OllamaService {
   }
 
   /**
-   * Generates text completion using the model service
+   * Generates text completion using the model service.
    * @description Sends a prompt to the model and returns the generated response
    * @param prompt - Text input to send to the model
    * @param format - Optional format specification for structured output
@@ -117,8 +117,10 @@ export default class OllamaService {
         },
         keep_alive: '5m',
         think: false,
-        stream: false,
-        ...(format ? { format } : {})
+        stream: false
+      }
+      if (format) {
+        chatRequest.format = format
       }
       const data: ChatResponse = await this.ollama.chat({ ...chatRequest, stream: false })
       return format ? data : data.message.content
@@ -129,7 +131,7 @@ export default class OllamaService {
   }
 
   /**
-   * Creates a configured service instance
+   * Creates a configured service instance.
    * @description Applies authentication for remote services or basic configuration for local instances
    * @returns Promise that resolves to a configured service instance
    */
@@ -146,7 +148,7 @@ export default class OllamaService {
           }
         })
       } catch (error: unknown) {
-        ErrorHandler.handleConfigError(error, 'getInstance')
+        LogHandler.handleConfigError(error, 'getInstance')
       }
     }
     return new Ollama({

@@ -27,14 +27,14 @@
   "contributes": {
     "keybindings": [
       {
-        "command": "Nexora-AI.AcceptSuggestion",
-        "key": "cmd+shift+a",
-        "when": "editorTextFocus"
+        "key": "tab",
+        "command": "editor.action.inlineSuggest.commit",
+        "when": "editorTextFocus && (codeLensVisible || inlineSuggestionVisible)"
       },
       {
-        "command": "Nexora-AI.RejectSuggestion",
-        "key": "cmd+shift+r",
-        "when": "editorTextFocus"
+        "command": "editor.action.inlineSuggest.dismiss",
+        "key": "escape",
+        "when": "editorTextFocus && (codeLensVisible || inlineSuggestionVisible)"
       }
     ],
     "commands": [

@@ -1,8 +1,8 @@
 import * as vscode from 'vscode'
-import { ErrorHandler } from '@utils/index'
+import { LogHandler } from '@utils/index'
 
 /**
- * ErrorLense class for displaying diagnostics with visual enhancements
+ * ErrorLense class for displaying diagnostics with visual enhancements.
  * @description Provides line highlighting, diagnostic text append, and gutter icons for errors and warnings
  */
 export default class ErrorLense {
@@ -20,40 +20,52 @@ export default class ErrorLense {
   private activeEditor: vscode.TextEditor | undefined
 
   /**
-   * Initializes a new ErrorLense instance
+   * Initializes a new ErrorLense instance.
    * @param context - Extension context for managing subscriptions
    */
   constructor(context: vscode.ExtensionContext) {
     this.context = context
     this.errorLineDecoration = vscode.window.createTextEditorDecorationType({
-      backgroundColor: 'rgba(255, 0, 0, 0.1)',
+      gutterIconPath: vscode.Uri.parse(
+        'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iNyIgZmlsbD0iI2NjNjY2NiIgc3Ryb2tlPSIjYWE0NDQ0IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxwYXRoIGQ9Ik04IDR2NE04IDEwaC4wMSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+'
+      ),
+      backgroundColor: 'rgba(204, 102, 102, 0.08)',
       borderWidth: '0 0 0 3px',
-      borderColor: 'rgba(255, 0, 0, 0.5)',
+      borderColor: 'rgba(204, 102, 102, 0.3)',
       isWholeLine: true
     })
     this.warningLineDecoration = vscode.window.createTextEditorDecorationType({
-      backgroundColor: 'rgba(255, 165, 0, 0.1)',
+      gutterIconPath: vscode.Uri.parse(
+        'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNOCAxTDE0IDEzSDJMNCAxWiIgZmlsbD0iI2RkYjM2NiIgc3Ryb2tlPSIjY2M5OTMzIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxwYXRoIGQ9Ik04IDV2M004IDEwaC4wMSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+'
+      ),
+      backgroundColor: 'rgba(221, 179, 102, 0.08)',
       borderWidth: '0 0 0 3px',
-      borderColor: 'rgba(255, 165, 0, 0.5)',
+      borderColor: 'rgba(221, 179, 102, 0.3)',
       isWholeLine: true
     })
     this.infoLineDecoration = vscode.window.createTextEditorDecorationType({
-      backgroundColor: 'rgba(0, 123, 255, 0.1)',
+      gutterIconPath: vscode.Uri.parse(
+        'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iNyIgZmlsbD0iIzY2YjNmZiIgc3Ryb2tlPSIjNDQ5OWVlIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxwYXRoIGQ9Ik04IDR2NE04IDEwaC4wMSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+'
+      ),
+      backgroundColor: 'rgba(102, 179, 255, 0.08)',
       borderWidth: '0 0 0 3px',
-      borderColor: 'rgba(0, 123, 255, 0.5)',
+      borderColor: 'rgba(102, 179, 255, 0.3)',
       isWholeLine: true
     })
     this.diagnosticTextDecoration = vscode.window.createTextEditorDecorationType({
+      gutterIconPath: vscode.Uri.parse(
+        'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iNyIgZmlsbD0iIzk5OTk5OSIgc3Ryb2tlPSIjNzc3Nzc3IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxwYXRoIGQ9Ik04IDR2NE04IDEwaC4wMSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+'
+      ),
       after: {
-        color: 'rgba(128, 128, 128, 0.7)',
+        color: 'rgba(153, 153, 153, 0.7)',
         margin: '0 0 0 1em',
-        fontWeight: 'normal'
+        fontWeight: '400'
       }
     })
   }
 
   /**
-   * Initializes the ErrorLense service by registering event listeners and applying decorations
+   * Initializes the ErrorLense service by registering event listeners and applying decorations.
    */
   public initialize(): void {
     try {
@@ -98,12 +110,12 @@ export default class ErrorLense {
         diagnosticChangeDisposable
       )
     } catch (error: unknown) {
-      ErrorHandler.handle(error, 'error lens initialize', false, 'error')
+      LogHandler.handle(error, 'error lens initialize', false, 'error')
     }
   }
 
   /**
-   * Updates visual decorations for the given editor based on diagnostics
+   * Updates visual decorations for the given editor based on diagnostics.
    * @param editor - The text editor to update decorations for
    */
   private updateDecorations(editor: vscode.TextEditor): void {
@@ -177,12 +189,12 @@ export default class ErrorLense {
       editor.setDecorations(this.infoLineDecoration, infoRanges)
       editor.setDecorations(this.diagnosticTextDecoration, textDecorations)
     } catch (error: unknown) {
-      ErrorHandler.handle(error, 'error lens update decorations', false, 'error')
+      LogHandler.handle(error, 'error lens update decorations', false, 'error')
     }
   }
 
   /**
-   * Removes all visual decorations from the editor
+   * Removes all visual decorations from the editor.
    * @param editor - The text editor to clear decorations from
    */
   private clearDecorations(editor: vscode.TextEditor): void {
@@ -193,7 +205,7 @@ export default class ErrorLense {
   }
 
   /**
-   * Formats diagnostic text for inline display
+   * Formats diagnostic text for inline display.
    * @param diagnostic - The diagnostic to format
    * @returns Formatted diagnostic text with severity prefix
    */
@@ -203,7 +215,7 @@ export default class ErrorLense {
   }
 
   /**
-   * Converts diagnostic severity to text representation
+   * Converts diagnostic severity to text representation.
    * @param severity - The diagnostic severity level
    * @returns Text representation of the severity level
    */
@@ -223,22 +235,22 @@ export default class ErrorLense {
   }
 
   /**
-   * Returns the color code for diagnostic severity display
+   * Returns the color code for diagnostic severity display.
    * @param severity - The diagnostic severity level
    * @returns RGBA color string for the severity level
    */
   private getDiagnosticColor(severity: vscode.DiagnosticSeverity): string {
     switch (severity) {
       case vscode.DiagnosticSeverity.Error:
-        return 'rgba(255, 0, 0, 0.8)'
+        return '#cc6666'
       case vscode.DiagnosticSeverity.Warning:
-        return 'rgba(255, 165, 0, 0.8)'
+        return '#ddb366'
       case vscode.DiagnosticSeverity.Information:
-        return 'rgba(0, 123, 255, 0.8)'
+        return '#66b3ff'
       case vscode.DiagnosticSeverity.Hint:
-        return 'rgba(128, 128, 128, 0.8)'
+        return '#999999'
       default:
-        return 'rgba(128, 128, 128, 0.8)'
+        return '#999999'
     }
   }
 }

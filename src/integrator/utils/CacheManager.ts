@@ -14,7 +14,7 @@ type CacheResponse =
   | unknown[]
 
 /**
- * CacheManager provides a key-value cache with automatic eviction
+ * CacheManager provides a key-value cache with automatic eviction.
  * @description Stores key-value pairs with a maximum size limit
  */
 class CacheManager {
@@ -26,7 +26,7 @@ class CacheManager {
   private readonly maxSize: number = 5000
 
   /**
-   * Private constructor prevents direct instantiation
+   * Private constructor prevents direct instantiation.
    * @description Enforces singleton pattern by making constructor private
    */
   private constructor() {
@@ -34,7 +34,7 @@ class CacheManager {
   }
 
   /**
-   * Returns the singleton instance of CacheManager
+   * Returns the singleton instance of CacheManager.
    * @description Creates a new instance if none exists, otherwise returns the existing instance
    * @returns The shared CacheManager instance
    */
@@ -44,7 +44,7 @@ class CacheManager {
   }
 
   /**
-   * Stores a value in the cache with the specified key
+   * Stores a value in the cache with the specified key.
    * @param id - The unique identifier for the cached value
    * @param value - The value to store (must be of type CacheResponse)
    */
@@ -56,7 +56,7 @@ class CacheManager {
   }
 
   /**
-   * Retrieves a value from the cache by its key
+   * Retrieves a value from the cache by its key.
    * @param id - The unique identifier for the cached value
    * @returns The cached value or undefined if the key is not found
    */
@@ -65,7 +65,7 @@ class CacheManager {
   }
 
   /**
-   * Removes the oldest entry from the cache
+   * Removes the oldest entry from the cache.
    * @description Automatically called when the cache reaches its maximum size limit
    */
   private evictOldest(): void {
@@ -80,7 +80,7 @@ class CacheManager {
 }
 
 /**
- * Exports the singleton CacheManager instance
+ * Exports the singleton CacheManager instance.
  * @description Provides a single shared instance of CacheManager across the application
  */
 export default CacheManager.getInstance()

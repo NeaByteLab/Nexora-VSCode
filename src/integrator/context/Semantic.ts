@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { SemanticSegment } from '@interfaces/index'
 
 /**
- * Provides utilities for retrieving semantic tokens from VSCode documents.
+ * Provides utilities for retrieving semantic tokens from documents.
  * Semantic tokens contain information about the syntax highlighting and
  * semantic meaning of code elements in a document.
  */
@@ -41,7 +41,7 @@ export default class SemanticToken {
   }
 
   /**
-   * Formats semantic tokens into a readable string representation
+   * Formats semantic tokens into a readable string representation.
    *
    * @param tokens - Array of semantic token segments to format
    * @returns Formatted string with token information
@@ -96,7 +96,7 @@ export default class SemanticToken {
   }
 
   /**
-   * Converts token type index to readable name
+   * Converts token type index to readable name.
    *
    * @param tokenType - Numeric index of the token type
    * @returns String name of the token type
@@ -131,7 +131,7 @@ export default class SemanticToken {
   }
 
   /**
-   * Converts token modifiers bitmask to array of modifier names
+   * Converts token modifiers bitmask to array of modifier names.
    *
    * @param tokenModifiers - Bitmask representing active modifiers
    * @returns Array of modifier names

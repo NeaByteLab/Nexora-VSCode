@@ -1,57 +1,66 @@
 import * as vscode from 'vscode'
 import { vscodeWhitelistExt } from '@constants/index'
-import { KeyboardBinding, CompletionProvider, CodeActionLint } from '@integrator/index'
-import { ErrorHandler } from '@utils/index'
+import { CompletionHandler, CompletionProvider, ErrorLense } from '@integrator/index'
+import { LogHandler } from '@utils/index'
 
 /**
- * Manages inline completion registration and file monitoring
+ * Default document selector for inline completion.
+ * @description Selects files with whitelisted extensions
+ */
+const defaultSelector: vscode.DocumentSelector = {
+  scheme: 'file',
+  pattern: `**/*.{${vscodeWhitelistExt.join(',')}}`
+}
+
+/**
+ * Manages inline completion registration and file monitoring.
  * @description Registers completion providers and handles file context for code suggestions
  */
 export default class CompletionEvent {
   /** Extension context for managing subscriptions */
   private readonly context: vscode.ExtensionContext
-  /** Inline suggestion service for code suggestions */
-  private readonly completionProvider: CompletionProvider
-  /** Keyboard binding service for suggestion actions */
-  private readonly keyboardBinding: KeyboardBinding
-  /** Code action provider for lint fixes */
-  private readonly codeActionLint: CodeActionLint
 
   /**
-   * Initializes a new CompletionEvent instance
+   * Initializes a new CompletionEvent instance.
    * @param context - Extension context for managing subscriptions
    */
   constructor(context: vscode.ExtensionContext) {
     this.context = context
-    this.completionProvider = new CompletionProvider(context)
-    this.keyboardBinding = new KeyboardBinding(context)
-    this.codeActionLint = new CodeActionLint(context)
   }
 
   /**
-   * Initializes the completion service by registering providers and keyboard bindings
+   * Initializes the completion service and registers all required providers.
+   * @description Registers command handlers, completion providers, and error lens for the extension
    */
   public initialize(): void {
     try {
-      this.keyboardBinding?.initialize()
-      const codeActionDisposable: vscode.Disposable = vscode.languages.registerCodeActionsProvider(
-        {
-          scheme: 'file',
-          pattern: `**/*.{${vscodeWhitelistExt.join(',')}}`
-        },
-        this.codeActionLint
+      this.context.subscriptions.push(
+        vscode.commands.registerCommand(
+          'editor.action.inlineSuggest.dismiss',
+          (source?: string) => {
+            CompletionHandler.getInstance().handleDismiss(source ?? '')
+          }
+        ),
+        vscode.commands.registerCommand('editor.action.inlineSuggest.commit', (source?: string) => {
+          CompletionHandler.getInstance().handleCommit(source ?? '')
+        }),
+        vscode.commands.registerCommand('editor.action.inlineSuggest.acceptNextLine', () => {
+          LogHandler.handleAcceptWarning()
+        }),
+        vscode.commands.registerCommand('editor.action.inlineSuggest.acceptNextWord', () => {
+          LogHandler.handleAcceptWarning()
+        })
       )
-      const completionDisposable: vscode.Disposable =
+      this.context.subscriptions.push(
+        vscode.languages.registerCodeLensProvider(defaultSelector, CompletionHandler.getInstance()),
         vscode.languages.registerInlineCompletionItemProvider(
-          {
-            scheme: 'file',
-            pattern: `**/*.{${vscodeWhitelistExt.join(',')}}`
-          },
-          this.completionProvider
+          defaultSelector,
+          new CompletionProvider()
         )
-      this.context.subscriptions.push(completionDisposable, codeActionDisposable)
+      )
+      new ErrorLense(this.context).initialize()
     } catch (error: unknown) {
-      ErrorHandler.handle(error, 'completion event listener initialization', true, 'error')
+      LogHandler.handle(error, 'completion event listener initialization', true, 'error')
     }
   }
 }

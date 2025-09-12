@@ -1,16 +1,18 @@
 import knex, { Knex } from 'knex'
 import { AccountData } from '@interfaces/index'
-import { ErrorHandler } from '@utils/index'
+import { LogHandler } from '@utils/index'
 
 /**
- * Account management utility
- * Handles account retrieval from database with rate limiting support
+ * Account management utility.
+ * @description Handles account retrieval from database with rate limiting support
  */
 export default class KnexManager {
+  /** Database connection instance */
   private readonly database: Knex
 
   /**
-   * Creates a new KnexManager instance
+   * Creates a new KnexManager instance.
+   * @description Initializes database connection with SQLite configuration
    * @param filename - Path to the SQLite database file
    */
   constructor(filename: string) {
@@ -28,8 +30,8 @@ export default class KnexManager {
   }
 
   /**
-   * Gets a random account without rate limits
-   * Finds accounts with no hourly or daily limits and returns a random selection
+   * Gets a random account without rate limits.
+   * @description Finds accounts with no hourly or daily limits and returns a random selection
    * @returns Promise resolving to account data or null if none found
    */
   async getRandomAccount(): Promise<AccountData | null> {
@@ -41,7 +43,7 @@ export default class KnexManager {
         .first()
       return result ?? null
     } catch (error: unknown) {
-      ErrorHandler.handleDatabaseError(error, 'getRandomAccount')
+      LogHandler.handleDatabaseError(error, 'getRandomAccount')
       return null
     }
   }

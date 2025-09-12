@@ -2,9 +2,10 @@ import * as vscode from 'vscode'
 import { CheckConfig, SelectModel, SelectDatabase, TestService } from '@cmd/index'
 import { OllamaService } from '@services/index'
 import { configSection, vscodeSettingsCommand, vscodeSettingsFilter } from '@constants/index'
+import { StatusBarItem } from '@integrator/index'
 
 /**
- * Activates extension configuration and registers commands
+ * Activates extension configuration and registers commands.
  * @description Registers all extension commands and adds them to the context subscriptions
  * @param context - Extension context for managing subscriptions
  */
@@ -53,4 +54,5 @@ export default function (context: vscode.ExtensionContext): void {
     selectDatabaseCommand,
     testServiceCommand
   )
+  StatusBarItem.getInstance().show(`$(lightbulb) ${configSection}: Ready!`)
 }

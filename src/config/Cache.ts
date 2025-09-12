@@ -4,7 +4,8 @@ import { CacheManager } from '@integrator/index'
 import { configSection } from '@constants/index'
 
 /**
- * Initializes the configuration manager
+ * Initializes the configuration manager.
+ * @description Updates the configuration cache with current settings
  * @returns void
  */
 export function updateConfigCache(): void {
@@ -13,8 +14,9 @@ export function updateConfigCache(): void {
 }
 
 /**
- * Checks if the configuration has changed
- * @returns boolean
+ * Checks if the configuration has changed.
+ * @description Compares current configuration with cached values to detect changes
+ * @returns boolean indicating if configuration has changed
  */
 export function isConfigChanged(): boolean {
   const config: ConfigurationData = ConfigManager.getConfig()

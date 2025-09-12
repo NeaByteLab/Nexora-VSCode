@@ -2,11 +2,11 @@ import { ChatResponse } from 'ollama'
 import { CompletionResult } from '@interfaces/index'
 import { OllamaService } from '@services/index'
 import { StatusBarItem } from '@integrator/index'
-import { ErrorHandler } from '@utils/index'
+import { LogHandler } from '@utils/index'
 import { configSection } from '@constants/index'
 
 /**
- * Tests the availability of the model service
+ * Tests the availability of the model service.
  * @description Sends a test prompt to the service and displays the response in a notification
  * @param ollamaService - Service instance for testing
  * @returns Promise that resolves when the test is complete
@@ -19,7 +19,7 @@ export default async function (ollamaService: OllamaService): Promise<void> {
   )
   if (typeof resCompletion === 'string' && resCompletion.length > 0) {
     const cleanResponse: string | undefined = resCompletion.split('</think>')[1] ?? resCompletion
-    ErrorHandler.showNotification(`${configSection}: ${cleanResponse}`, 'info')
+    LogHandler.showNotification(`${configSection}: ${cleanResponse}`, 'info')
   }
   statusBarItem?.hide()
 }
